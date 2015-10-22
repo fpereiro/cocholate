@@ -1,0 +1,25 @@
+{
+   "name": "cocholate",
+   "version": "0.1.0",
+   "description": "Small and fast DOM manipulation library.",
+   "dependencies": {
+      "dale": "2.4.0",
+      "teishi": "3.1.2"
+   },
+   "main": "cocholate.js",
+   "author": "Federico Pereiro <fpereiro@gmail.com>",
+   "contributors": ["Federico Pereiro <fpereiro@gmail.com>"],
+   "license": [{
+      "type": "Public Domain",
+      "url": "http://github.com/fpereiro/cocholate#license"
+   }],
+   "keywords": ["DOM", "dom"],
+   "repository" : {
+      "type": "git",
+      "url": "http://github.com/fpereiro/cocholate.git"
+   },
+   "bugs": {
+      "url": "http://github.com/fpereiro/cocholate/issues",
+      "email": "fpereiro@gmail.com"
+   }
+}
