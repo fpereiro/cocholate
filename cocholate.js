@@ -1,5 +1,5 @@
 /*
-cocholate - v0.1.0
+cocholate - v0.1.1
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -56,7 +56,7 @@ Please refer to readme.md to read the annotated source.
                ['tag selector', selector, ['a', 'abbr', 'address', 'area', 'article', 'aside', 'audio', 'b', 'base', 'bdi', 'bdo', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'cite', 'code', 'col', 'colgroup', 'command', 'datalist', 'dd', 'del', 'details', 'dfn', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'keygen', 'label', 'legend', 'li', 'link', 'map', 'mark', 'menu', 'meta', 'meter', 'nav', 'noscript', 'object', 'ol', 'optgroup', 'option', 'output', 'p', 'param', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'script', 'section', 'select', 'small', 'source', 'span', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track', 'u', 'ul', 'var', 'video', 'wbr'], 'oneOf', teishi.test.equal]
             ],
             [type === 'object', [
-               ['number of keys of selector', keys, {min: 0, max: 3}, teishi.test.range],
+               ['number of keys of selector', dale.keys (keys).length, {min: 0, max: 3}, teishi.test.range],
                ['keys of selector', keys, ['or', 'not', 'in'], 'eachOf', teishi.test.equal],
                [keys [1] !== undefined, [['second key of selector', 'first key of selector'], keys [1], keys [0], teishi.test.notEqual]],
                [keys [2] !== undefined, [['third key of selector', 'second key of selector'], keys [2], keys [1], teishi.test.notEqual]],
@@ -118,8 +118,14 @@ Please refer to readme.md to read the annotated source.
          var keytype = teishi.t (k);
          var element = c.find (v);
          if (element === false) return output = false;
-         if (k === 'in') element = element.getElementsByTagName ('*');
-         else output = setop (keytype === 'integer' || k === 'in' ? 'and' : k, output, element);
+         if (k === 'in') {
+            var element2 = [];
+            dale.do (element, function (v) {
+               element2.concat (v.getElementsByTagName ('*'));
+            });
+            element = element2;
+         }
+         output = setop (keytype === 'integer' || k === 'in' ? 'and' : k, output, element);
       });
       return output;
    }
