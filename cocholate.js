@@ -1,5 +1,5 @@
 /*
-cocholate - v0.1.1
+cocholate - v0.2.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -8,160 +8,117 @@ Please refer to readme.md to read the annotated source.
 
 (function () {
 
+   // *** SETUP ***
+
    if (typeof exports === 'object') return console.log ('cocholate only works in a browser!');
 
    var dale   = window.dale;
    var teishi = window.teishi;
 
+   var type   = teishi.t;
+
    var c = window.c = function (selector, fun) {
-      if (teishi.stop ('c', ['fun', fun, 'function'])) return false;
+      if (teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'])) return false;
       var elements = c.find (selector);
       if (elements === false) return false;
+      if (! fun) return type (selector) === 'string' && selector [0] === '#' ? elements [0] : elements;
       var Arguments = teishi.c (arguments).slice (2);
-      var output = dale.do (elements, function (v) {
+      return dale.do (elements, function (v) {
          return fun.apply (undefined, [v].concat (Arguments));
       });
-      return output.length > 1 ? output : output [0];
    }
 
-   /*
+   // *** DOM OPERATIONS ***
 
-      selector:
-         - string
-         - array (representing AND)
-         - object (representing OR and/or NOT, depending on the keys)
-
-      string selector:
-         - by id (starts with `#`)
-         - by class (starts with `.`)
-         - by attribute name (starts with attribute name, ends with `=`)
-         - by attribute value (starts with `=`, ends with attribute value)
-         - by both attribute name and attribute value (divided by `=`)
-         - by tag name (must be valid HTML5 tag)
-
-      array selector: ANDs all possibilities, which means that takes all intersections.
-      object selector: can contain at most two different keys, `OR` and `NOT`. The values of these keys can be a selector.
-
-   */
-
-   c.find = function (selector, fun) {
-
-      var validate = function (selector, fun) {
-         var type = teishi.t (selector);
-         var keys = dale.keys (selector);
-
-         if (teishi.stop ('c.get', [
-            ['selector', type, ['string', 'array', 'object'], 'oneOf', teishi.test.equal],
-            [type === 'string' && selector [0] !== '#' && selector [0] !== '.' && selector [0] !== '=' && selector [selector.length - 1] !== '=',
-               ['tag selector', selector, ['a', 'abbr', 'address', 'area', 'article', 'aside', 'audio', 'b', 'base', 'bdi', 'bdo', 'blockquote', 'body', 'br', 'button', 'canvas', 'caption', 'cite', 'code', 'col', 'colgroup', 'command', 'datalist', 'dd', 'del', 'details', 'dfn', 'div', 'dl', 'dt', 'em', 'embed', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'header', 'hgroup', 'hr', 'html', 'i', 'iframe', 'img', 'input', 'ins', 'kbd', 'keygen', 'label', 'legend', 'li', 'link', 'map', 'mark', 'menu', 'meta', 'meter', 'nav', 'noscript', 'object', 'ol', 'optgroup', 'option', 'output', 'p', 'param', 'pre', 'progress', 'q', 'rp', 'rt', 'ruby', 's', 'samp', 'script', 'section', 'select', 'small', 'source', 'span', 'strong', 'style', 'sub', 'summary', 'sup', 'table', 'tbody', 'td', 'textarea', 'tfoot', 'th', 'thead', 'time', 'title', 'tr', 'track', 'u', 'ul', 'var', 'video', 'wbr'], 'oneOf', teishi.test.equal]
-            ],
-            [type === 'object', [
-               ['number of keys of selector', dale.keys (keys).length, {min: 0, max: 3}, teishi.test.range],
-               ['keys of selector', keys, ['or', 'not', 'in'], 'eachOf', teishi.test.equal],
-               [keys [1] !== undefined, [['second key of selector', 'first key of selector'], keys [1], keys [0], teishi.test.notEqual]],
-               [keys [2] !== undefined, [['third key of selector', 'second key of selector'], keys [2], keys [1], teishi.test.notEqual]],
-            ]],
-            ['fun', fun, ['function', 'undefined'], 'oneOf']
-         ])) return false;
-         return type;
-      }
-
-      var all = document.getElementsByTagName ('*');
-
-      var type = validate (selector, fun);
-      if (type === false) return false;
-
-      var stringSelector = function (selector) {
-         var output = [];
-         if      (selector [0] === '#') output = output.concat (document.getElementById    (selector.slice (1)));
-         else if (selector [0] === '.') output = output.concat (document.getElementByClass (selector.slice (1)));
-         else if (selector [0] === '=') dale.do (all, function (v) {
-            if (dale.stopOn (v.attributes, true, function (v) {
-               return selector.slice (1) === v;
-            })) output.push (v);
+   c.setop = function (operation, set1, set2) {
+      if (operation === 'and') return dale.fil (set1, undefined, function (v) {
+         return set2.indexOf (v) !== -1 ? v : undefined;
+      });
+      var output = set1.slice ();
+      if (operation === 'or') {
+         dale.do (set2, function (v) {
+            if (output.indexOf (set2) === -1) output.push (v);
          });
-         else if (selector [selector.length - 1] === '=') output = output.concat (document.querySelectorAll ('[' + selector.slice (0, -1) + ']'));
-         else if (selector.match ('=')) output = output.concat (document.querySelectorAll ('[' + selector.split ('=') [0] + '=' + selector.split ('=') [1] + ']'))
-         else output = output.concat (document.getElementsByTagName (selector));
-         return output;
       }
-
-      // (and) [...] take first. if zero, it's zero, return. if not, for each iterate until either there or pull and if zero, stop.
-      // {or: []} take first, add all that match. then, for next, get the thing, iterate over all and add those that are not there.
-      // not: first takes all elements, then substracts those that match
-      // non-commutative necessarily, operators are processed as they are read!
-
-      var setop = function (operation, set1, set2) {
-         if (operation === 'and') return dale.fil (set1, undefined, function (v) {
-            return set2.indexOf (v) !== -1 ? v : undefined;
+      else {
+         if (output.length === 0) output = dale.do (document.getElementsByTagName ('*'), function (v) {return v});
+         dale.do (set2, function (v) {
+            var index = output.indexOf (v);
+            if (index !== -1) output.splice (index, 1);
          });
-         var output = set1.slice ();
-         if (operation === 'or') {
-            dale.do (set2, function (v) {
-               if (output.indexOf (set2) === -1) output.push (v);
-            });
-         }
-         else {
-            if (output.length === 0) output = all;
-            dale.do (set2, function (v, k) {
-               var index = output.indexOf (set2);
-               if (index !== -1) delete output [index];
-            });
-         }
-         return output;
       }
+      return output;
+   }
 
-      if (type === 'string') return stringSelector (selector);
+   c.find = function (selector) {
+
+      var selectorType = type (selector);
+      if (selectorType === 'string') return document.querySelectorAll (selector);
+
+      if (teishi.stop ('cocholate', [
+         ['selector type', selectorType, ['array', 'object'], 'oneOf', teishi.test.equal],
+         [selectorType === 'object', ['keys of selector', dale.keys (selector), ['or', 'not'], 'eachOf', teishi.test.equal]]
+      ])) return false;
 
       var output = [];
-      dale.stopOn (selector, false, function (v, k) {
-         var keytype = teishi.t (k);
+      dale.stop (selector, false, function (v, k) {
          var element = c.find (v);
          if (element === false) return output = false;
-         if (k === 'in') {
-            var element2 = [];
-            dale.do (element, function (v) {
-               element2.concat (v.getElementsByTagName ('*'));
-            });
-            element = element2;
-         }
-         output = setop (keytype === 'integer' || k === 'in' ? 'and' : k, output, element);
+         output = c.setop (selectorType === 'array' ? 'and' : k, output, element);
       });
       return output;
    }
 
    c.empty = function (selector) {
       c (selector, function (element) {
-         if (! element) return;
          dale.do (element.getElementsByTagName ('*'), function (v) {v.remove ();});
       });
    }
 
-   c.write = function (selector, html) {
+   c.fill = function (selector, html) {
       c.empty (selector);
       c (selector, function (element) {
-         if (! element) return;
          element.innerHTML = html;
       });
    }
 
-   c.get   = function (selector, attributes) {
-      c (selector, function (element, attributes) {
-         if (teishi.stop ('c.get', ['attributes', attributes, 'object'])) return false;
-         return dale.obj (attributes, function (v, k) {
-            return [k, element.attributes [v]];
+   c.get  = function (selector, attributes, css) {
+      if (teishi.stop ('c.get', ['attributes', attributes, ['string', 'array'], 'oneOf'])) return false;
+
+      return c (selector, function (element) {
+         return dale.obj (attributes, function (v) {
+            if (css) return [v, element.style [v]];
+            else     return [v, element.getAttribute (v)];
          });
       });
    }
 
-   c.set  = function (selector, attributes) {
-      c (selector, function (element, attributes) {
-         if (teishi.stop ('c.set', ['attributes', attributes, 'object'])) return false;
+   c.set  = function (selector, attributes, css) {
+      if (teishi.stop ('c.set', [
+         ['attributes', attributes, 'object'],
+         ['attribute values', attributes, ['integer', 'string', 'null'], 'eachOf']
+      ])) return false;
+
+      c (selector, function (element) {
          dale.do (attributes, function (v, k) {
-            element.attributes [k] = v;
+            if       (css)        element.style [k] = v === null ? '' : v;
+            else if  (v === null) element.removeAttribute (k);
+            else                  element.setAttribute    (k, v);
          });
       });
    }
+
+   c.place = function (selector, where, html) {
+      if (teishi.stop ('c.place', [
+         ['where', where, ['beforeBegin', 'afterBegin', 'beforeEnd', 'afterEnd'], 'oneOf', teishi.test.equal],
+         ['html', html, 'string']
+      ])) return false;
+      c (selector, function (element) {
+         element.insertAdjacentHTML (where, html);
+      });
+   }
+
+   // *** NON-DOM OPERATIONS ***
 
    c.cookie = function () {
       return dale.obj (document.cookie.split (/;\s+/), function (v) {
@@ -191,12 +148,6 @@ Please refer to readme.md to read the annotated source.
          else                  callback (null, r);
       }
       r.send (body);
-   }
-
-   c.change = function (evalString, attributes) {
-      return dale.obj (['onchange', 'onkeydown', 'onkeyup'], attributes || {}, function (v) {
-         return [v, evalString];
-      });
    }
 
 }) ();
