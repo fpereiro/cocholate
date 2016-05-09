@@ -1,5 +1,5 @@
 /*
-cocholate - v0.2.1
+cocholate - v0.2.2
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -18,14 +18,19 @@ Please refer to readme.md to read the annotated source.
    var type   = teishi.t;
 
    var c = window.c = function (selector, fun) {
-      if (teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'])) return false;
-      var elements = c.find (selector);
-      if (elements === false) return false;
-      if (! fun) return type (selector) === 'string' && selector [0] === '#' ? elements [0] : elements;
-      var Arguments = teishi.c (arguments).slice (2);
-      return dale.do (elements, function (v) {
-         return fun.apply (undefined, [v].concat (Arguments));
-      });
+      try {
+         if (teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'])) return false;
+         var elements = c.find (selector);
+         if (elements === false) return false;
+         if (! fun) return type (selector) === 'string' && selector [0] === '#' ? elements [0] : elements;
+         var Arguments = teishi.c (arguments).slice (2);
+         return dale.do (elements, function (v) {
+            return fun.apply (undefined, [v].concat (Arguments));
+         });
+      }
+      catch (error) {
+         console.log ('ERROR', error);
+      }
    }
 
    // *** DOM OPERATIONS ***
@@ -135,7 +140,7 @@ Please refer to readme.md to read the annotated source.
       callback = callback || function () {};
       var r = new XMLHttpRequest ();
       r.open (method.toUpperCase (), path, true);
-      if (teishi.complex (body)) {
+      if (teishi.complex (body) && teishi.t (body, true) !== 'formdata') {
          headers ['content-type'] = headers ['content-type'] || 'application/json';
          body = teishi.s (body);
       }
