@@ -1,6 +1,6 @@
 {
    "name": "cocholate",
-   "version": "0.2.2",
+   "version": "0.3.0",
    "description": "Small and fast DOM manipulation library.",
    "dependencies": {
       "dale": "3.3.0",

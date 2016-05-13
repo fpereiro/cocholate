@@ -1,5 +1,5 @@
 /*
-cocholate - v0.2.2
+cocholate - v0.3.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -17,20 +17,64 @@ Please refer to readme.md to read the annotated source.
 
    var type   = teishi.t;
 
+   (function polyfill () {
+
+      var createContainer = function () {
+         return document.createElement ('_');
+      }
+
+      // https://gist.github.com/eligrey/1276030
+      if (! createContainer ().insertAdjacentHTML) {
+
+         HTMLElement.prototype.insertAdjacentHTML = function (position, html) {
+
+            var This = this, container = createContainer (), Parent = This.parentNode, node, firstChild, nextSibling;
+
+            container.innerHTML = html;
+
+            if      (position === 'beforeBegin') {
+               while (node = container.firstChild) Parent.insertBefore (node, This);
+            }
+            else if (position === 'afterBegin') {
+               firstChild = This.firstChild;
+               while (node = container.lastChild)  This.insertBefore (node, firstChild);
+            }
+            else if (position === 'beforeEnd') {
+               while (node = container.firstChild) This.appendChild (node);
+            }
+            else {
+               nextSibling = This.nextSibling;
+               while (node = container.lastChild)  Parent.insertBefore (node, nextSibling)
+            }
+         }
+      }
+
+      // https://developer.mozilla.org/en-US/docs/Web/API/ChildNode/remove
+      if (! Element.prototype.remove) {
+         Element.prototype.remove = function () {
+            if (this.parentNode) this.parentNode.removeChild (this);
+         }
+      }
+
+   }) ();
+
    var c = window.c = function (selector, fun) {
-      try {
-         if (teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'])) return false;
-         var elements = c.find (selector);
-         if (elements === false) return false;
-         if (! fun) return type (selector) === 'string' && selector [0] === '#' ? elements [0] : elements;
-         var Arguments = teishi.c (arguments).slice (2);
-         return dale.do (elements, function (v) {
-            return fun.apply (undefined, [v].concat (Arguments));
-         });
+      if (teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'])) return false;
+      var elements = c.find (selector);
+      if (elements === false) return false;
+      if (! fun) return type (selector) === 'string' && selector [0] === '#' ? elements [0] : elements;
+      var Arguments = teishi.c (arguments).slice (2);
+      return dale.do (elements, function (v) {
+         return fun.apply (undefined, [v].concat (Arguments));
+      });
+   }
+
+   c.nodeListToArray = function (nodeList) {
+      var length = nodeList.length, i = 0, output = [];
+      while (i < length) {
+         output [i] = nodeList [i++];
       }
-      catch (error) {
-         console.log ('ERROR', error);
-      }
+      return output;
    }
 
    // *** DOM OPERATIONS ***
@@ -46,7 +90,7 @@ Please refer to readme.md to read the annotated source.
          });
       }
       else {
-         if (output.length === 0) output = dale.do (document.getElementsByTagName ('*'), function (v) {return v});
+         if (output.length === 0) output = dale.do (c.nodeListToArray (document.getElementsByTagName ('*')), function (v) {return v});
          dale.do (set2, function (v) {
             var index = output.indexOf (v);
             if (index !== -1) output.splice (index, 1);
@@ -58,7 +102,7 @@ Please refer to readme.md to read the annotated source.
    c.find = function (selector) {
 
       var selectorType = type (selector);
-      if (selectorType === 'string') return document.querySelectorAll (selector);
+      if (selectorType === 'string') return c.nodeListToArray (document.querySelectorAll (selector));
 
       if (teishi.stop ('cocholate', [
          ['selector type', selectorType, ['array', 'object'], 'oneOf', teishi.test.equal],
@@ -76,7 +120,9 @@ Please refer to readme.md to read the annotated source.
 
    c.empty = function (selector) {
       c (selector, function (element) {
-         dale.do (element.getElementsByTagName ('*'), function (v) {v.remove ();});
+         dale.do (c.nodeListToArray (element.getElementsByTagName ('*')), function (v) {
+            v.remove ();
+         });
       });
    }
 
@@ -123,6 +169,17 @@ Please refer to readme.md to read the annotated source.
       });
    }
 
+   c.ready = function (fun) {
+      if (document.addEventListener) return document.addEventListener ('DOMContentLoaded', fun);
+      // http://stackoverflow.com/questions/799981/document-ready-equivalent-without-jquery
+      if (document.attachEvent) {
+         document.attachEvent ('onreadystatechange', function () {
+            if (document.readyState === 'complete') fun ();
+         });
+      }
+      else fun ();
+   }
+
    // *** NON-DOM OPERATIONS ***
 
    c.cookie = function () {
@@ -140,7 +197,7 @@ Please refer to readme.md to read the annotated source.
       callback = callback || function () {};
       var r = new XMLHttpRequest ();
       r.open (method.toUpperCase (), path, true);
-      if (teishi.complex (body) && teishi.t (body, true) !== 'formdata') {
+      if (teishi.complex (body)) {
          headers ['content-type'] = headers ['content-type'] || 'application/json';
          body = teishi.s (body);
       }
