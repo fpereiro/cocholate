@@ -31,7 +31,7 @@ Or you can use these links to use the latest version - courtesy of [RawGit](http
 ```html
 <script src="https://cdn.rawgit.com/fpereiro/dale/1bb6973037dd409f667231d51c55845672d19821/dale.js"></script>
 <script src="https://cdn.rawgit.com/fpereiro/teishi/984e9295f7ef31cd04576b8f9ac015e1953aabc1/teishi.js"></script>
-<script src=""></script>
+<script src="https://cdn.rawgit.com/fpereiro/cocholate/72cde1d1cc999f23cb127df186387060bc2e9ce3/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -308,7 +308,7 @@ It takes five arguments:
 The conveniences provided are:
 
 - You can directly pass a [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData) object, useful for `multipart/form-data` requests.
-- If you pass an array or object as `body`, the `content-type` header will be automatically set and the body will be stringified.
+- If you pass an array or object as `body`, the `content-type` header will be automatically set to `application/json` and the body will be stringified.
 - All ajax requests done through this function are asynchronous.
 - The function will synchronously return an object of the form `{headers: ..., body: ...}`.
 - The callback will unconditinally receive the request itself as its first argument. This request contains all the relevant information, including payloads and errors.
