@@ -1,0 +1,140 @@
+<!DOCTYPE HTML>
+<html>
+   <head>
+      <meta charset="utf8">
+      <title>Cocholate!</title>
+   </head>
+   <body>
+      <script src="node_modules/dale/dale.js"></script>
+      <script src="node_modules/teishi/teishi.js"></script>
+      <script src="https://cdn.rawgit.com/fpereiro/lith/3c570a8da0a54033c3d04496eb8f75c6a4a3877c/lith.js"></script>
+      <script src="cocholate.js"></script>
+      <script>
+
+         var dale   = window.dale;
+         var teishi = window.teishi;
+         var lith   = window.lith;
+         var c      = window.c;
+
+         var type = teishi.t, log = teishi.l;
+
+         var Test = function (fun) {
+            var error = fun ();
+            if (error) throw new Error (error);
+         };
+
+         c.ready (function () {
+
+            Test (function () {
+               if (c ('selector', /invalidfun/) !== false) return 'Invalid function was considered valid.';
+               if (c ('body').length !== 1)                return 'Find could not locate body.';
+
+               c.fill ('body', lith.g ([
+                  ['div', {class: 'hola'}, 'Content'],
+                  ['div', {id: 'hola'}, 'Content']
+               ]));
+
+               if (c ('.hola') [0].innerHTML !== 'Content') return 'Class selector didn\'t work.';
+               if (c ('#hola').innerHTML     !== 'Content') return 'Id selector didn\'t work.';
+
+               c.fill ('body', lith.g ([
+                  ['div', {id: 'hola'}, [
+                     ['p', {class: 'a'}, 'Yes.'],
+                     ['p', {class: 'b'}, 'No.'],
+                  ]]
+               ]));
+
+               if (c ('body').length !== 1)      return 'c.empty didn\'t work.';
+               if (c ('body p').length !== 2)    return 'c.fill didn\'t work.';
+               if (c ('#hola p.a').length !== 1) return 'Non-id selector with id first element didn\'t work.';
+
+               if (c.fill ('body', /notastring/) !== false) return 'c.fill accepted invalid HTML.';
+
+               if (c ([':or', 'div', 'p']).length !== 3) return 'or selector didn\'t work.';
+
+               if (c ([':or', [':or', 'div', 'p']]).length !== 3) return 'nested or selector didn\'t work.';
+
+               if (c ([':and', 'div *', 'p']).length !== 2) return 'and selector didn\'t work.';
+
+               if (c ([':and', 'div', 'p']).length !== 0) return 'and selector didn\'t work.';
+
+               if (c ([':and', [':or', 'div', 'p']]).length !== 3) return 'and selector didn\'t work.';
+
+               if (c ([':not', 'div#hola']).length !== 7) return 'not selector didn\'t work.';
+               if (c ([':not', 'body']).length !== 7) return 'not selector didn\'t work.';
+               if (c ([':not', 'div#hola', 'body']).length !== 6) return 'not selector didn\'t work.';
+               if (c ([':not', 'div#hola *']).length !== 6) return 'not selector didn\'t work.';
+               if (c ([':not', 'div', 'p']).length !== 5) return 'not selector didn\'t work.';
+               if (c ([':not', [':or', 'div', 'p']]).length !== 5) return 'not selector didn\'t work.';
+               if (c ([':and', [':not', 'div#hola'], [':not', 'p']]).length !== 5) return 'not selector didn\'t work.';
+
+               if (c ([':and', 'body *', [':or', 'div', 'p']]).length !== 3) return 'nested selector didn\'t work.';
+
+               c.fill ('body', lith.g (['div', {id: 'container'}, ['div', {id: 'inner'}]]));
+
+               c.place ('#container', 'beforeBegin', lith.g (['div', {id: 'beforecontainer'}]));
+               if (c ('body div') [0].getAttribute ('id') !== 'beforecontainer') return 'c.place beforeBegin didn\'t work';
+
+               c.place ('#container', 'afterEnd', lith.g (['div', {id: 'aftercontainer'}]));
+               if (c ('body div') [c ('body div').length - 1].getAttribute ('id') !== 'aftercontainer') return 'c.place afterEnd didn\'t work';
+
+               c.place ('#container', 'afterBegin', lith.g (['div', {id: 'beforeinner'}]));
+               if (c ('#container div') [0].getAttribute ('id') !== 'beforeinner') return 'c.place afterBegin didn\'t work';
+
+               c.place ('#container', 'beforeEnd', lith.g (['div', {id: 'afterinner'}]));
+               if (c ('#container div') [2].getAttribute ('id') !== 'afterinner') return 'c.place beforeEnd didn\'t work';
+
+               c.set ('#container div', {'^': 'someclass'});
+               c.set ('#container div', {class: 'someclass'});
+
+               if (c ('#container div.someclass').length !== 3) 'c.set didn\'t work.';
+
+               if (c.get ('#container div', 'class') [0].class !== 'someclass') return 'c.get didn\'t work.';
+
+               c.set ('#container div', {width: '200px'}, true);
+
+               if (c.get ('#container div', ['height', 'width'], true) [0].height !== null) return 'multiple c.get didn\'t work.';
+               if (c.get ('#container div', ['height', 'width'], true) [0].width  !== '200px') return 'multiple c.get didn\'t work.';
+
+               c.fill ('body', lith.g (dale.do (['red', 'blue', 'green'], function (v, k) {
+                  return ['p', {id: k, class: v}];
+               })));
+
+               if (JSON.stringify (c.get ('p', ['id', 'class'])) !== '[{"id":"0","class":"red"},{"id":"1","class":"blue"},{"id":"2","class":"green"}]') return 'c.get didn\'t work.';
+
+               c.fill ('body', lith.g (dale.do (['red', 'blue', 'green'], function (v) {
+                  return ['p', {style: 'color: ' + v}];
+               })));
+
+               if (JSON.stringify (c.get ('p', 'color', true)) !== '[{"color":"red"},{"color":"blue"},{"color":"green"}]') return 'c.get didn\'t work.';
+
+               c.fill ('body', lith.g (['p']));
+
+               c.set ('body p', {class: 'someclass'});
+               if (JSON.stringify (c.get ('body p', 'class')) !== '[{"class":"someclass"}]') return 'c.set didn\'t work.';
+
+               c.set ('body p', {class: null});
+               if (JSON.stringify (c.get ('body p', ['class', 'another'])) !== '[{"class":null,"another":null}]') return 'c.set didn\'t work.';
+
+               c.set ('body p', {color: 'red'}, true);
+               if (JSON.stringify (c.get ('body p', 'color', true)) !== '[{"color":"red"}]') return 'c.set didn\'t work.';
+
+               c.set ('body p', {color: null}, true);
+               if (JSON.stringify (c.get ('body p', 'color', true)) !== '[{"color":null}]') return 'c.set didn\'t work.';
+
+               // XXX Add tests for c.ready.
+
+               if (c.cookie ('username=John Doe; expires=Thu, 18 Dec 2013 12:00:00 UTC').username !== 'John Doe') return 'c.cookie didn\'t work.';
+
+               if (c.ajax (/invalidmethod/, /invalidpath/) !== false) return 'c.ajax didn\'t validate its input.';
+
+               log (c.ajax ('get', 'http://hope.itaint.valid', null, null, function (request) {
+                  if (request.status !== 0) throw new Error ('c.ajax did something strange');
+                  log ('Success', 'All tests were successful!');
+               }));
+            });
+         });
+
+      </script>
+   </body>
+</html>
