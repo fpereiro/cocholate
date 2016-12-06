@@ -34,8 +34,12 @@
                   ['div', {id: 'hola'}, 'Content']
                ]));
 
-               if (c ('.hola') [0].innerHTML !== 'Content') return 'Class selector didn\'t work.';
-               if (c ('#hola').innerHTML     !== 'Content') return 'Id selector didn\'t work.';
+               if (c ('.hola') [0].innerHTML !== 'Content')    return 'Class selector didn\'t work.';
+               if (c ('#hola').innerHTML     !== 'Content')    return 'Id selector didn\'t work.';
+               if (c ('div#hola').innerHTML     !== 'Content') return 'Id selector didn\'t work.';
+
+               if (type (c ('#hola[name="name"]')) !== 'array') return 'Non id selector starting with # didn\'t work.';
+               if (type (c ('#hola>div')) !== 'array')          return 'Non id selector starting with # didn\'t work.';
 
                c.fill ('body', lith.g ([
                   ['div', {id: 'hola'}, [
@@ -97,10 +101,13 @@
                if (c.get ('#container div', ['height', 'width'], true) [0].width  !== '200px') return 'multiple c.get didn\'t work.';
 
                c.fill ('body', lith.g (dale.do (['red', 'blue', 'green'], function (v, k) {
-                  return ['p', {id: k, class: v}];
+                  return ['p', {id: 'a' + k, class: v}];
                })));
 
-               if (JSON.stringify (c.get ('p', ['id', 'class'])) !== '[{"id":"0","class":"red"},{"id":"1","class":"blue"},{"id":"2","class":"green"}]') return 'c.get didn\'t work.';
+               if (JSON.stringify (c.get ('p',    ['id', 'class'])) !== '[{"id":"a0","class":"red"},{"id":"a1","class":"blue"},{"id":"a2","class":"green"}]') return 'c.get didn\'t work.';
+
+               if (JSON.stringify (c.get ('#a0', ['id', 'class']))  !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work.';
+               if (JSON.stringify (c.get ('p#a0', ['id', 'class'])) !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work.';
 
                c.fill ('body', lith.g (dale.do (['red', 'blue', 'green'], function (v) {
                   return ['p', {style: 'color: ' + v}];
@@ -128,10 +135,17 @@
 
                if (c.ajax (/invalidmethod/, /invalidpath/) !== false) return 'c.ajax didn\'t validate its input.';
 
-               log (c.ajax ('get', 'http://hope.itaint.valid', null, null, function (request) {
+               var error;
+               var ajax = c.ajax ('get', 'http://hope.itaint.valid', null, null, function (request) {
                   if (request.status !== 0) throw new Error ('c.ajax did something strange');
-                  log ('Success', 'All tests were successful!');
-               }));
+                  if (! error) log ('Success', 'All tests were successful!');
+               });
+
+               if (type (ajax) !== 'object' || type (ajax.headers) !== 'object' || type (ajax.body) !== 'string') {
+                  error = true;
+                  return 'c.ajax didn\'t return a valid object.';
+               }
+
             });
          });
 

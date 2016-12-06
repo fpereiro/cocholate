@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v1.0.0, is considered to be *unstable* and *incomplete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
+The current version of cocholate, v1.1.0, is considered to be *unstable* and *incomplete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
 
 - Improve the readme and add annotated source code.
 - Test the library in older browsers and improve the polyfill.
@@ -65,6 +65,22 @@ c ('.nav');
 ```
 
 Whenever you pass a string as a `selector` and no other arguments, cocholate simply uses the native [document.querySelectorAll](http://www.w3schools.com/jsref/met_document_queryselectorall.asp), with the sole difference that returns an array instead of a [NodeList](http://www.w3schools.com/jsref/met_document_queryselectorall.asp).
+
+A very important exception is when you pass a string selector that targets an id, such as `#hola` or `div#hola`, you won't get an array - instead, you'll get either the element itself, or `undefined`:
+
+```javascript
+// This code will return the div with id `hola`
+c ('#hola');
+
+// This code will do the same thing.
+c ('#hola');
+
+// This code, however, won't do the same thing, though it means the same thing.
+c ('body #hola');
+
+// This code will return an array, since it targets the children of an element.
+c ('#hola p');
+```
 
 If you want to use the logical operations `and`, `not` and `or`, you can do so by using a `selector` that's an array where the first element is either `':and'`, `':or'` or `':not'`.
 
@@ -169,7 +185,7 @@ You will get:
 
 `c.get` is useful for fetching attributes from elements. It takes `attributes` as its second argument (which can be either a string or an array of strings, each of them representing an attribute name) and an optional boolean third parameter `css` which marks whether you want to get CSS properties instead of DOM ones.
 
-For each of the matching elements, this function will return an object where the key is the attribute name and the corresponding value is the attribute value.
+For each of the matching elements, this function will return an object where the key is the attribute name and the corresponding value is the attribute value. All these objects are wrapped in an array (with the sole exception of a selector that targets an id).
 
 For example, if you have the following HTML:
 
@@ -195,6 +211,13 @@ c.get ('p', ['id', 'class']);
 
 You'll get an array with three objects but two properties each: `[{id: 'a', class: 'red'}, {id: 'b', class: 'blue'}, {id: 'c', class: 'green'}]`.
 
+As with `c`, if you pass a selector that targets the id of an element, you will get the attributes themselves without them being wrapped in an array:
+
+```javascript
+c.get ('#a', 'class');  // will return {class: 'red'}
+c.get ('p#a', 'class'); // will also return {class: 'red'}
+```
+
 Using the `css` attribute, you can obtain the CSS properties of an element. Consider this example:
 
 ```html
@@ -212,13 +235,13 @@ If you run this code on the above HTML, you will obtain an array with three obje
 Finally, either with normal attributes or CSS ones, if the attribute is not present, you will get `null` as its value. For example:
 
 ```javascript
-c.get ('p', 'name');         // will return `{name: null}`
-c.get ('p', 'height', true); // will return `{height: null}`
+c.get ('p', 'name');         // will return `[{name: null}]`
+c.get ('p', 'height', true); // will return `[{height: null}]`
 ```
 
 ### `c.set`
 
-This function is similar to `c.get`, except that it *sets* the attributes instead of getting them.
+This function is similar to `c.get`, except that it *sets* the attributes instead of getting them. This function has no meaningful return value.
 
 This function takes a selector as first argument, and as second argument an object with all the properties you wish to set. An optional `css` flag is the third argument, in order to set inline CSS properties.
 

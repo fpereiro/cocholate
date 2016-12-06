@@ -1,5 +1,5 @@
 /*
-cocholate - v1.0.0
+cocholate - v1.1.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -24,15 +24,16 @@ Please refer to readme.md to read the annotated source (but not yet!).
 
       var elements = c.find (selector);
       if (elements === false) return false;
-      if (! fun) {
-         if (type (selector) === 'string' && selector.match (/^#[^\s,]+$/)) return elements [0];
-         else                                                               return elements;
+
+      if (fun) {
+         var args = teishi.c (arguments).slice (2);
+         elements = dale.do (elements, function (v) {
+            return fun.apply (undefined, [v].concat (args));
+         });
       }
 
-      var args = teishi.c (arguments).slice (2);
-      return dale.do (elements, function (v) {
-         return fun.apply (undefined, [v].concat (args));
-      });
+      if (type (selector) === 'string' && selector.match (/^[a-z]*#[^\s\[>,:]+$/)) return elements [0];
+      else                                                                         return elements;
    }
 
    c.nodeListToArray = function (nodeList) {
