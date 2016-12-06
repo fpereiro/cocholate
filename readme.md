@@ -31,7 +31,7 @@ Or you can use these links to use the latest version - courtesy of [RawGit](http
 ```html
 <script src="https://cdn.rawgit.com/fpereiro/dale/1bb6973037dd409f667231d51c55845672d19821/dale.js"></script>
 <script src="https://cdn.rawgit.com/fpereiro/teishi/984e9295f7ef31cd04576b8f9ac015e1953aabc1/teishi.js"></script>
-<script src="https://cdn.rawgit.com/fpereiro/cocholate/72cde1d1cc999f23cb127df186387060bc2e9ce3/cocholate.js"></script>
+<script src="https://cdn.rawgit.com/fpereiro/cocholate/2359bd9add60db12dd1d46516c30bf974ace8ff4/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
