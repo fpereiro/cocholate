@@ -31,7 +31,7 @@ Or you can use these links to use the latest version - courtesy of [RawGit](http
 ```html
 <script src="https://cdn.rawgit.com/fpereiro/dale/1bb6973037dd409f667231d51c55845672d19821/dale.js"></script>
 <script src="https://cdn.rawgit.com/fpereiro/teishi/984e9295f7ef31cd04576b8f9ac015e1953aabc1/teishi.js"></script>
-<script src=""></script>
+<script src="https://cdn.rawgit.com/fpereiro/cocholate/ed9ac0f2099cdc15b7b406d3e38a53d55ccef303/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -339,8 +339,6 @@ c.set ('#hello', {value: 2}, false, true);
 // for CSS attributes
 c.set ('#hello', {color: 'lime'}, true, true);
 ```
-
-This
 
 ## Non-DOM functions
 
