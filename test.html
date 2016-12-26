@@ -88,7 +88,7 @@
                c.place ('#container', 'beforeEnd', lith.g (['div', {id: 'afterinner'}]));
                if (c ('#container div') [2].getAttribute ('id') !== 'afterinner') return 'c.place beforeEnd didn\'t work';
 
-               c.set ('#container div', {'^': 'someclass'});
+               if (c.set ('#container div', {'^': 'someclass'}) !== false) return 'c.set accepted invalid input';
                c.set ('#container div', {class: 'someclass'});
 
                if (c ('#container div.someclass').length !== 3) 'c.set didn\'t work.';
@@ -128,6 +128,27 @@
 
                c.set ('body p', {color: null}, true);
                if (JSON.stringify (c.get ('body p', 'color', true)) !== '[{"color":null}]') return 'c.set didn\'t work.';
+
+               c.fill ('body', lith.g ([
+                  ['input', {id: 'wha', value: 1}],
+                  ['input', {id: 'other'}]
+               ]));
+
+               var wha;
+               var styl;
+               c ('#wha').onchange = function () {
+                  wha  = this.value;
+                  styl = this.style.color;
+               }
+               c.set ('#wha', {value: 2});
+               if (wha !== '2') return 'onchange wasn\'t fired by c.set';
+               c.set ('#wha', {color: 'lime'}, true);
+               if (styl !== 'lime') return 'onchange wasn\'t fired by c.set';
+
+               c.set ('#wha', {value: 3}, false, true);
+               c.set ('#wha', {color: 'magenta'}, true, true);
+               if (wha !== '2') return 'onchange wasn\'t detriggered by c.set';
+               if (styl !== 'lime') return 'onchange wasn\'t fired by c.set';
 
                // XXX Add tests for c.ready.
 

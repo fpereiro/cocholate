@@ -1,5 +1,5 @@
 /*
-cocholate - v1.1.0
+cocholate - v1.2.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -126,7 +126,7 @@ Please refer to readme.md to read the annotated source (but not yet!).
       });
    }
 
-   c.set  = function (selector, attributes, css) {
+   c.set  = function (selector, attributes, css, notrigger) {
       if (teishi.stop ('c.set', [
          ['attributes', attributes, 'object'],
          [
@@ -144,6 +144,7 @@ Please refer to readme.md to read the annotated source (but not yet!).
             else if  (v === null) element.removeAttribute (k);
             else                  element.setAttribute    (k, v);
          });
+         if (element.onchange && ! notrigger) element.onchange ();
       });
    }
 

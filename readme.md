@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v1.1.0, is considered to be *unstable* and *incomplete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
+The current version of cocholate, v1.2.0, is considered to be *unstable* and *incomplete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
 
 - Improve the readme and add annotated source code.
 - Test the library in older browsers and improve the polyfill.
@@ -31,7 +31,7 @@ Or you can use these links to use the latest version - courtesy of [RawGit](http
 ```html
 <script src="https://cdn.rawgit.com/fpereiro/dale/1bb6973037dd409f667231d51c55845672d19821/dale.js"></script>
 <script src="https://cdn.rawgit.com/fpereiro/teishi/984e9295f7ef31cd04576b8f9ac015e1953aabc1/teishi.js"></script>
-<script src="https://cdn.rawgit.com/fpereiro/cocholate/2359bd9add60db12dd1d46516c30bf974ace8ff4/cocholate.js"></script>
+<script src=""></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -301,6 +301,46 @@ Now the HTML will look like this:
 <p style="">
 </p>
 ```
+
+By default, if the element whose attribute is being modified has an `onchange` event handler, the `onchange` event will be automatically triggered. For example:
+
+```html
+<input id="hello">
+<script>
+   c ('#hello').onchange = function () {
+      alert (this.value);
+   }
+
+   c.set ('#hello', {value: 2});
+</script>
+```
+
+Because of the event handler that we assigned to `#hello`, we will see an alert with the value `2`.
+
+This also is the case with CSS events. For example, this call to `c.set` will also trigger the `onchange` event:
+
+```html
+<input id="hello">
+<script>
+   c ('#hello').onchange = function () {
+      alert (this.style.color);
+   }
+
+   c.set ('#hello', {color: 'lime'}, true);
+</script>
+```
+
+If you want to override this behavior, you can simply pass a truthy fourth argument:
+
+```javascript
+// for normal attributes
+c.set ('#hello', {value: 2}, false, true);
+
+// for CSS attributes
+c.set ('#hello', {color: 'lime'}, true, true);
+```
+
+This
 
 ## Non-DOM functions
 
