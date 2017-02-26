@@ -54,6 +54,8 @@
 
                if (c.fill ('body', /notastring/) !== false) return 'c.fill accepted invalid HTML.';
 
+               if (c (['invalid', 'div']) !== false) return 'invalid array selector was accepted.';
+
                if (c ([':or', 'div', 'p']).length !== 3) return 'or selector didn\'t work.';
 
                if (c ([':or', [':or', 'div', 'p']]).length !== 3) return 'nested or selector didn\'t work.';
@@ -73,6 +75,13 @@
                if (c ([':and', [':not', 'div#hola'], [':not', 'p']]).length !== 5) return 'not selector didn\'t work.';
 
                if (c ([':and', 'body *', [':or', 'div', 'p']]).length !== 3) return 'nested selector didn\'t work.';
+
+               c.fill ('body', lith.g ([
+                  ['div', {class: 'inner'}],
+                  ['div', {id: 'container'}, ['div', {class: 'inner'}]]
+               ]));
+
+               if (c ({selector: 'div.inner', from: c ('#container')}).length !== 1) return 'from selector didn\'t work.';
 
                c.fill ('body', lith.g (['div', {id: 'container'}, ['div', {id: 'inner'}]]));
 
@@ -150,8 +159,6 @@
                if (wha !== '2') return 'onchange wasn\'t detriggered by c.set';
                if (styl !== 'lime') return 'onchange wasn\'t fired by c.set';
 
-               // XXX Add tests for c.ready.
-
                if (c.cookie ('username=John Doe; expires=Thu, 18 Dec 2013 12:00:00 UTC').username !== 'John Doe') return 'c.cookie didn\'t work.';
 
                if (c.ajax (/invalidmethod/, /invalidpath/) !== false) return 'c.ajax didn\'t validate its input.';
@@ -160,6 +167,7 @@
                var ajax = c.ajax ('get', 'http://hope.itaint.valid', null, null, function (request) {
                   if (request.status !== 0) throw new Error ('c.ajax did something strange');
                   if (! error) log ('Success', 'All tests were successful!');
+                  if (! error) c.fill ('body', lith.g ('All tests were successful!'));
                });
 
                if (type (ajax) !== 'object' || type (ajax.headers) !== 'object' || type (ajax.body) !== 'string') {

@@ -6,10 +6,11 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v1.2.0, is considered to be *unstable* and *incomplete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
+The current version of cocholate, v1.3.0, is considered to be *somewhat stable* and *somewhat complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
 
-- Improve the readme and add annotated source code.
+- Add annotated source code.
 - Test the library in older browsers and improve the polyfill.
+- Performance improvements.
 
 ## Installation
 
@@ -29,9 +30,9 @@ cocholate is written in Javascript. You can use it in the browser by sourcing th
 Or you can use these links to use the latest version - courtesy of [RawGit](https://rawgit.com) and [MaxCDN](https://maxcdn.com).
 
 ```html
-<script src="https://cdn.rawgit.com/fpereiro/dale/1bb6973037dd409f667231d51c55845672d19821/dale.js"></script>
-<script src="https://cdn.rawgit.com/fpereiro/teishi/984e9295f7ef31cd04576b8f9ac015e1953aabc1/teishi.js"></script>
-<script src="https://cdn.rawgit.com/fpereiro/cocholate/ed9ac0f2099cdc15b7b406d3e38a53d55ccef303/cocholate.js"></script>
+<script src="https://cdn.rawgit.com/fpereiro/dale/a168912fdffddadb84a662f10e8bfa76d8e11beb/dale.js"></script>
+<script src="https://cdn.rawgit.com/fpereiro/teishi/29fb21807975f3e8491276a96815421b48730b2b/teishi.js"></script>
+<script src=""></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -80,6 +81,19 @@ c ('body #hola');
 
 // This code will return an array, since it targets the children of an element.
 c ('#hola p');
+```
+
+If instead of searching from all elements you want to search within a specific element, instead of a string selector you can use an object with the form `{selector: SELECTOR, from: FROM}`, where `SELECTOR` is the string selector and `FROM` is an DOM element. For example:
+
+```javascript
+// This will return all divs with class `hello` from the body
+c ({selector: 'div', from: c ('body') [0]});
+
+// This will return all paragraphs with class `hello` from a div with id `hello`
+c ({selector: 'div', from: document.getElementById ('hello')});
+
+// This is equivalent to the last thing we did
+c ({selector: 'div', from: c ('div#hello')});
 ```
 
 If you want to use the logical operations `and`, `not` and `or`, you can do so by using a `selector` that's an array where the first element is either `':and'`, `':or'` or `':not'`.

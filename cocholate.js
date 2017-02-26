@@ -1,5 +1,5 @@
 /*
-cocholate - v1.2.0
+cocholate - v1.3.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -64,14 +64,22 @@ Please refer to readme.md to read the annotated source (but not yet!).
 
    c.find = function (selector) {
 
-      if (type (selector) === 'string') return c.nodeListToArray (document.querySelectorAll (selector));
+      var selectorType = type (selector);
 
       if (teishi.stop ('cocholate', [
-         ['selector', selector, ['array', 'string'], 'oneOf'],
-         function () {
-            return ['first element of array selector', selector [0], [':and', ':or', ':not'], 'oneOf', teishi.test.equal]
-         }
+         ['selector', selector, ['array', 'string', 'object'], 'oneOf'],
+         function () {return [
+            [selectorType === 'array',  ['first element of array selector', selector [0], [':and', ':or', ':not'], 'oneOf', teishi.test.equal]],
+            [selectorType === 'object', [
+               ['selector keys', dale.keys (selector), ['selector', 'from'], 'eachOf', teishi.test.equal],
+               ['valid HTML node', selector.from, 'undefined', teishi.test.notEqual],
+               function () {return [['from.querySelectorAll', 'valid HTML node'], selector.from.querySelectorAll, 'function']}
+            ]]
+         ]}
       ])) return false;
+
+      if (selectorType === 'string') return c.nodeListToArray (document.querySelectorAll (selector));
+      if (selectorType === 'object') return c.nodeListToArray (selector.from.querySelectorAll (selector.selector));
 
       var operation = selector.shift ();
       var output = [];
@@ -80,7 +88,7 @@ Please refer to readme.md to read the annotated source (but not yet!).
          var elements = c.find (v);
          if (elements === false) return output = false;
          if (k === 0 && operation !== ':not') output = elements;
-         else         output = c.setop (operation.replace (':', ''), output, elements);
+         else                                 output = c.setop (operation.replace (':', ''), output, elements);
       });
       return output;
    }
