@@ -1,5 +1,5 @@
 /*
-cocholate - v1.3.0
+cocholate - v1.4.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -37,9 +37,8 @@ Please refer to readme.md to read the annotated source (but not yet!).
    }
 
    c.nodeListToArray = function (nodeList) {
-      return dale.fil (nodeList, undefined, function (v, k) {
-         if (k.match (/^\d+$/)) return v;
-      });
+      // https://davidwalsh.name/nodelist-array
+      return [].slice.call (nodeList);
    }
 
    c.setop = function (operation, set1, set2) {

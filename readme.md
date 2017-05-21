@@ -6,10 +6,10 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v1.3.0, is considered to be *somewhat stable* and *somewhat complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
+The current version of cocholate, v1.4.0, is considered to be *somewhat stable* and *somewhat complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
 
 - Add annotated source code.
-- Test the library in older browsers and improve the polyfill.
+- Extend browser compatibility.
 - Performance improvements.
 
 ## Installation
@@ -30,12 +30,24 @@ cocholate is written in Javascript. You can use it in the browser by sourcing th
 Or you can use these links to use the latest version - courtesy of [RawGit](https://rawgit.com) and [MaxCDN](https://maxcdn.com).
 
 ```html
-<script src="https://cdn.rawgit.com/fpereiro/dale/a168912fdffddadb84a662f10e8bfa76d8e11beb/dale.js"></script>
-<script src="https://cdn.rawgit.com/fpereiro/teishi/29fb21807975f3e8491276a96815421b48730b2b/teishi.js"></script>
-<script src="https://cdn.rawgit.com/fpereiro/cocholate/72d072aca0724fbd4a73e751abeace7e1ebc4707/cocholate.js"></script>
+<script src="https://cdn.rawgit.com/fpereiro/dale/9135a9699d53aac1eccc33becb31e7d402a52214/dale.js"></script>
+<script src="https://cdn.rawgit.com/fpereiro/teishi/9781a179ed2d5abce8d6383edc19f345db58ce70/teishi.js"></script>
+<script src=""></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
+
+cocholate is pure ES5 javascript. Browser compatibility is as follows:
+
+- Chrome 15 and above.
+- Firefox 22 and above.
+- Safari 5.1 and above.
+- IE9 and above.
+- Opera 11.6 and above.
+
+The author wishes to thank [Browserstack](https://browserstack.com) for providing tools to test cross-browser compatibility.
+
+<a href="https://www.browserstack.com"><img src="https://bstacksupport.zendesk.com/attachments/token/kkjj6piHDCXiWrYlNXjKbFveo/?name=Logo-01.svg" width="150px" height="33px"></a>
 
 ## Loading cocholate
 
