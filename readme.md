@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v1.4.0, is considered to be *somewhat stable* and *somewhat complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
+The current version of cocholate, v1.5.0, is considered to be *somewhat stable* and *somewhat complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
 
 - Add annotated source code.
 - Extend browser compatibility.
@@ -380,6 +380,8 @@ Quick & dirty cookie parsing. Takes an optional argument, `cookie`, a cookie str
 
 This function returns an object with keys/values, each of them pertaining to a property of the cookie.
 
+If you pass `false` as the argument, `c.cookie` will delete all the cookies.
+
 ### `c.ajax`
 
 This function can make ajax calls and provides a few conveniences.
@@ -398,11 +400,11 @@ The conveniences provided are:
 - If you pass an array or object as `body`, the `content-type` header will be automatically set to `application/json` and the body will be stringified.
 - All ajax requests done through this function are asynchronous.
 - The function will synchronously return an object of the form `{headers: ..., body: ...}`.
-- The callback will unconditinally receive the request itself as its first argument. This request contains all the relevant information, including payloads and errors.
+- If the response has a code 200, the callback will receive `null` as its first argument and the request itself as the second argument. If the code is not 200, the request will be received as the first argument. This request contains all the relevant information, including payloads and errors.
 
 ## Source code
 
-The complete source code is contained in `cocholate.js`. It is about 260 lines long.
+The complete source code is contained in `cocholate.js`. It is about 270 lines long.
 
 Annotated source code will be forthcoming when the library stabilizes.
 
