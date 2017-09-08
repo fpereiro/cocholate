@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v1.5.0, is considered to be *somewhat stable* and *somewhat complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
+The current version of cocholate, v1.6.0, is considered to be *somewhat stable* and *somewhat complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
 
 - Add annotated source code.
 - Extend browser compatibility.
@@ -32,7 +32,7 @@ Or you can use these links to use the latest version - courtesy of [RawGit](http
 ```html
 <script src="https://cdn.rawgit.com/fpereiro/dale/9135a9699d53aac1eccc33becb31e7d402a52214/dale.js"></script>
 <script src="https://cdn.rawgit.com/fpereiro/teishi/9781a179ed2d5abce8d6383edc19f345db58ce70/teishi.js"></script>
-<script src="https://cdn.rawgit.com/fpereiro/cocholate/a2971daf0710a0d28bb0b2968916d1bed57d97e6/cocholate.js"></script>
+<script src=""></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -390,8 +390,8 @@ It takes five arguments:
 
 - `method`: a string. Defaults to `'GET'` if you pass a falsy argument.
 - `path`: a string with the target path.
-- `body`: the body of the request. Defaults to `''` if you pass a falsy argument.
 - `headers`: an object where every value is a string. Defaults to `{}` if you pass a falsy argument.
+- `body`: the body of the request. Defaults to `''` if you pass a falsy argument.
 - `callback`: a function to be executed after the request is completed. Defaults to an empty function if you pass a falsy argument.
 
 The conveniences provided are:
@@ -399,12 +399,13 @@ The conveniences provided are:
 - You can directly pass a [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData) object, useful for `multipart/form-data` requests.
 - If you pass an array or object as `body`, the `content-type` header will be automatically set to `application/json` and the body will be stringified.
 - All ajax requests done through this function are asynchronous.
-- The function will synchronously return an object of the form `{headers: ..., body: ...}`.
-- If the response has a code 200, the callback will receive `null` as its first argument and the request itself as the second argument. If the code is not 200, the request will be received as the first argument. This request contains all the relevant information, including payloads and errors.
+- The function will synchronously return an object of the form `{headers: ..., body: ...}` (corresponding to the request data).
+- If the response has a code 200, the callback will receive `null` as its first argument and the following object as the second argument: `{headers: {...}, body: ..., xhr: <the response object>}`. If the `Content-Type` response header is `application/json`, the `body` will be parsed - if the `body` turns out to be invalid JSON, its value will be `false`.
+- If the code is not 200, the request will be received as the first argument. This request contains all the relevant information, including payloads and errors.
 
 ## Source code
 
-The complete source code is contained in `cocholate.js`. It is about 270 lines long.
+The complete source code is contained in `cocholate.js`. It is about 280 lines long.
 
 Annotated source code will be forthcoming when the library stabilizes.
 

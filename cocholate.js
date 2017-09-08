@@ -185,7 +185,7 @@ Please refer to readme.md to read the annotated source (but not yet!).
       });
    }
 
-   c.ajax = function (method, path, body, headers, callback) {
+   c.ajax = function (method, path, headers, body, callback) {
       method   = method   || 'GET';
       body     = body     || '';
       headers  = headers  || {};
@@ -208,8 +208,18 @@ Please refer to readme.md to read the annotated source (but not yet!).
       });
       r.onreadystatechange = function () {
          if (r.readyState !== 4) return;
-         if (r.status !== 200) callback (r);
-         else                  callback (null, r);
+         if (r.status !== 200)   return callback (r);
+         var json;
+         var res = {
+            xhr: r,
+            headers: dale.obj (r.getAllResponseHeaders ().split ('\r\n'), function (header) {
+               header = header.split (/:\s+/);
+               if (header [0].match (/^content-type/i) && header [1].match ('application/json')) json = true;
+               return header;
+            })
+         };
+         res.body = json ? teishi.p (r.responseText) : r.responseText;
+         callback (null, res);
       }
       r.send (body);
       return {headers: headers, body: body};
