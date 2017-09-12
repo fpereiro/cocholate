@@ -32,7 +32,7 @@ Or you can use these links to use the latest version - courtesy of [RawGit](http
 ```html
 <script src="https://cdn.rawgit.com/fpereiro/dale/9135a9699d53aac1eccc33becb31e7d402a52214/dale.js"></script>
 <script src="https://cdn.rawgit.com/fpereiro/teishi/9781a179ed2d5abce8d6383edc19f345db58ce70/teishi.js"></script>
-<script src=""></script>
+<script src="https://cdn.rawgit.com/fpereiro/cocholate/9410910ab1022951f9e16c8fcbd9121e7400b943/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -401,7 +401,7 @@ The conveniences provided are:
 - All ajax requests done through this function are asynchronous.
 - The function will synchronously return an object of the form `{headers: ..., body: ..., xhr: <the request object>}` (corresponding to the request data).
 - If the response has a code 200, the callback will receive `null` as its first argument and the following object as the second argument: `{headers: {...}, body: ..., xhr: <the request object>}`. If the `Content-Type` response header is `application/json`, the `body` will be parsed - if the `body` turns out to be invalid JSON, its value will be `false`.
-- If the code is not 200, the request will be received as the first argument. This request contains all the relevant information, including payloads and errors.
+- If the code is not 200, the request object will be received as the first argument. The request object contains all the relevant information, including payloads and errors.
 
 ## Source code
 
