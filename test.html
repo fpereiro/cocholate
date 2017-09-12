@@ -170,7 +170,7 @@
                   if (! error) c.fill ('body', lith.g ('All tests were successful!'));
                });
 
-               if (type (ajax) !== 'object' || type (ajax.headers) !== 'object' || type (ajax.body) !== 'string') {
+               if (type (ajax) !== 'object' || type (ajax.headers) !== 'object' || type (ajax.body) !== 'string' || type (ajax.xhr) !== 'object') {
                   error = true;
                   return 'c.ajax didn\'t return a valid object.';
                }

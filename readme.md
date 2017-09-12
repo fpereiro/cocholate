@@ -32,7 +32,7 @@ Or you can use these links to use the latest version - courtesy of [RawGit](http
 ```html
 <script src="https://cdn.rawgit.com/fpereiro/dale/9135a9699d53aac1eccc33becb31e7d402a52214/dale.js"></script>
 <script src="https://cdn.rawgit.com/fpereiro/teishi/9781a179ed2d5abce8d6383edc19f345db58ce70/teishi.js"></script>
-<script src="https://cdn.rawgit.com/fpereiro/cocholate/eda916eb24ca3a5a517c42a6f2024b74b7e122ac/cocholate.js"></script>
+<script src=""></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -399,8 +399,8 @@ The conveniences provided are:
 - You can directly pass a [FormData](https://developer.mozilla.org/en-US/docs/Web/API/FormData) object, useful for `multipart/form-data` requests.
 - If you pass an array or object as `body`, the `content-type` header will be automatically set to `application/json` and the body will be stringified.
 - All ajax requests done through this function are asynchronous.
-- The function will synchronously return an object of the form `{headers: ..., body: ...}` (corresponding to the request data).
-- If the response has a code 200, the callback will receive `null` as its first argument and the following object as the second argument: `{headers: {...}, body: ..., xhr: <the response object>}`. If the `Content-Type` response header is `application/json`, the `body` will be parsed - if the `body` turns out to be invalid JSON, its value will be `false`.
+- The function will synchronously return an object of the form `{headers: ..., body: ..., xhr: <the request object>}` (corresponding to the request data).
+- If the response has a code 200, the callback will receive `null` as its first argument and the following object as the second argument: `{headers: {...}, body: ..., xhr: <the request object>}`. If the `Content-Type` response header is `application/json`, the `body` will be parsed - if the `body` turns out to be invalid JSON, its value will be `false`.
 - If the code is not 200, the request will be received as the first argument. This request contains all the relevant information, including payloads and errors.
 
 ## Source code

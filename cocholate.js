@@ -1,5 +1,5 @@
 /*
-cocholate - v1.6.0
+cocholate - v1.6.1
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -222,7 +222,7 @@ Please refer to readme.md to read the annotated source (but not yet!).
          callback (null, res);
       }
       r.send (body);
-      return {headers: headers, body: body};
+      return {headers: headers, body: body, xhr: r};
    }
 
    // *** POLYFILL ***
