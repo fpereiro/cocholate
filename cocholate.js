@@ -1,5 +1,5 @@
 /*
-cocholate - v1.6.1
+cocholate - v1.6.2
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 

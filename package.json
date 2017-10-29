@@ -1,10 +1,10 @@
 {
    "name": "cocholate",
-   "version": "1.6.1",
+   "version": "1.6.2",
    "description": "Small and fast DOM manipulation library.",
    "dependencies": {
-      "dale": "4.3.0",
-      "teishi": "3.11.0"
+      "dale": "4.3.1",
+      "teishi": "3.11.1"
    },
    "main": "cocholate.js",
    "author": "Federico Pereiro <fpereiro@gmail.com>",

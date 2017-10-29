@@ -5,9 +5,9 @@
       <title>Cocholate!</title>
    </head>
    <body>
-      <script src="https://cdn.rawgit.com/fpereiro/dale/9135a9699d53aac1eccc33becb31e7d402a52214/dale.js"></script>
-      <script src="https://cdn.rawgit.com/fpereiro/teishi/9781a179ed2d5abce8d6383edc19f345db58ce70/teishi.js"></script>
-      <script src="https://cdn.rawgit.com/fpereiro/lith/13a7d1893b29611ee24e2b451148ba266e678249/lith.js"></script>
+      <script src="https://cdn.rawgit.com/fpereiro/dale/bfd9e2830e733ff8c9d97fd9dd5473b4ff804d4c/dale.js"></script>
+      <script src="https://cdn.rawgit.com/fpereiro/teishi/f0999bdc2db5d42a7e5c71a016f3dd594996f92f/teishi.js"></script>
+      <script src="https://cdn.rawgit.com/fpereiro/lith/b593bdd7440a04c22d6eae470d82e17512b52744/lith.js"></script>
       <script src="cocholate.js"></script>
       <script>
 
@@ -20,6 +20,7 @@
 
          var Test = function (fun) {
             var error = fun ();
+            if (error) console.log (error);
             if (error) throw new Error (error);
          };
 
@@ -164,8 +165,7 @@
                if (c.ajax (/invalidmethod/, /invalidpath/) !== false) return 'c.ajax didn\'t validate its input.';
 
                var error;
-               var ajax = c.ajax ('get', 'http://hope.itaint.valid', null, null, function (request) {
-                  if (request.status !== 0) throw new Error ('c.ajax did something strange');
+               var ajax = c.ajax ('get', 'notaroute', null, null, function (request) {
                   if (! error) log ('Success', 'All tests were successful!');
                   if (! error) c.fill ('body', lith.g ('All tests were successful!'));
                });
