@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v1.6.4, is considered to be *somewhat stable* and *somewhat complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
+The current version of cocholate, v1.6.5, is considered to be *somewhat stable* and *somewhat complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Future changes planned are:
 
 - Add annotated source code.
 - Extend browser compatibility.
@@ -32,7 +32,7 @@ Or you can use these links to use the latest version - courtesy of [RawGit](http
 ```html
 <script src="https://cdn.rawgit.com/fpereiro/dale/bfd9e2830e733ff8c9d97fd9dd5473b4ff804d4c/dale.js"></script>
 <script src="https://cdn.rawgit.com/fpereiro/teishi/60448b5612f7f10f008bffdfedbd6c9c93cf2256/teishi.js"></script>
-<script src="https://cdn.rawgit.com/fpereiro/cocholate/4854ffdb59dd0ff8c3ea3593c40e61e2b930fae9/cocholate.js"></script>
+<script src=""></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
