@@ -32,7 +32,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@ac36810de20ee18d5d5077bd2ccb94628d621e58/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@e1d6313b4269c54d163ac2097d6713d9e9e3f213/teishi.js"></script>
-<script src=""></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@a522845e7340488712571d929a29d8f00cbe4597/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
