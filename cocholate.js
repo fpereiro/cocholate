@@ -1,9 +1,9 @@
 /*
-cocholate - v1.6.6
+cocholate - v2.0.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
-Please refer to readme.md to read the annotated source (but not yet!).
+Please refer to readme.md to read the annotated source.
 */
 
 (function () {
@@ -17,6 +17,21 @@ Please refer to readme.md to read the annotated source (but not yet!).
 
    var type   = teishi.t;
 
+   // *** POLYFILL FOR insertAdjacentHTML ***
+
+   if (! document.createElement ('_').insertAdjacentHTML) HTMLElement.prototype.insertAdjacentHTML = function (position, html) {
+
+      var container = document.createElement ('div');
+      container.innerHTML = html;
+
+      while (container.firstChild) {
+         if      (position === 'beforeBegin') this.parentNode.insertBefore (container.firstChild, this);
+         else if (position === 'afterBegin')  this.insertBefore            (container.firstChild, this.firstChild);
+         else if (position === 'beforeEnd')   this.appendChild             (container.firstChild);
+         else                                 this.parentNode.insertBefore (container.firstChild, this.nextElementSibling)
+      }
+   }
+
    // *** CORE ***
 
    var c = window.c = function (selector, fun) {
@@ -26,36 +41,39 @@ Please refer to readme.md to read the annotated source (but not yet!).
       if (elements === false) return false;
 
       if (fun) {
-         var args = teishi.c (arguments).slice (2);
-         elements = dale.do (elements, function (v) {
+         var args = dale.go (arguments, function (v) {return v}).slice (2);
+         elements = dale.go (elements, function (v) {
             return fun.apply (undefined, [v].concat (args));
          });
       }
 
-      if (type (selector) === 'string' && selector.match (/^[a-z]*#[^\s\[>,:]+$/)) return elements [0];
-      else                                                                         return elements;
+      if (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/)) return elements [0];
+      else                                                                            return elements;
    }
 
    c.nodeListToArray = function (nodeList) {
-      // https://davidwalsh.name/nodelist-array
-      return [].slice.call (nodeList);
+      var output = [];
+      for (var i = 0; i < nodeList.length; i++) {
+         output.push (nodeList [i]);
+      }
+      return output;
    }
 
    c.setop = function (operation, set1, set2) {
       if (operation === 'and') return dale.fil (set1, undefined, function (v) {
-         return set2.indexOf (v) !== -1 ? v : undefined;
+         return set2.indexOf (v) > -1 ? v : undefined;
       });
       var output = set1.slice ();
       if (operation === 'or') {
-         dale.do (set2, function (v) {
+         dale.go (set2, function (v) {
             if (output.indexOf (set2) === -1) output.push (v);
          });
       }
       else {
          if (output.length === 0) output = c.nodeListToArray (document.getElementsByTagName ('*'));
-         dale.do (set2, function (v) {
+         dale.go (set2, function (v) {
             var index = output.indexOf (v);
-            if (index !== -1) output.splice (index, 1);
+            if (index > -1) output.splice (index, 1);
          });
       }
       return output;
@@ -71,17 +89,35 @@ Please refer to readme.md to read the annotated source (but not yet!).
             [selectorType === 'array',  ['first element of array selector', selector [0], [':and', ':or', ':not'], 'oneOf', teishi.test.equal]],
             [selectorType === 'object', [
                ['selector keys', dale.keys (selector), ['selector', 'from'], 'eachOf', teishi.test.equal],
-               ['valid HTML node', selector.from, 'undefined', teishi.test.notEqual],
-               function () {return [['from.querySelectorAll', 'valid HTML node'], selector.from.querySelectorAll, 'function']}
+               ['selector.selector', selector.selector, ['array', 'string'], 'oneOf'],
+               function () {
+                  if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return teishi.l ('teishi.v', 'selector.from passed to cocholate must be a DOM element.');
+                  return true;
+               },
             ]]
          ]}
       ])) return false;
 
-      if (selectorType === 'string') return c.nodeListToArray (document.querySelectorAll (selector));
-      if (selectorType === 'object') return c.nodeListToArray (selector.from.querySelectorAll (selector.selector));
+      if (selectorType !== 'array') {
+         if (document.querySelectorAll && selectorType === 'string') return c.nodeListToArray (document.querySelectorAll (selector));
+         if (document.querySelectorAll && selectorType === 'object') return c.nodeListToArray (selector.from.querySelectorAll (selector.selector));
 
-      var operation = selector.shift ();
-      var output = [];
+         var from = selector.from ? selector.from : document;
+         selector = selectorType === 'string' ? selector : selector.selector;
+         if (selector !== '*' && ! selector.match (/^[a-z0-9]*(#|\.)?[a-z0-9]+$/i)) return teishi.l ('The selector ' + selector + ' is not supported in IE <= 7 or Firefox <= 3.');
+
+         var criterium = selector.match ('#') ? 'id' : (selector.match (/\./) ? 'class' : undefined);
+         selector = selector.split (/#|\./);
+         var tag = (selector.length === 2 || ! criterium) ? selector [0].toUpperCase () : undefined;
+
+         return dale.fil (c.nodeListToArray (from.getElementsByTagName (tag || '*')), undefined, function (node) {
+            if (criterium === 'class' && (node.className || '').split (/\s/).indexOf (teishi.last (selector)) === -1) return;
+            if (criterium === 'id'    && node.id !== teishi.last (selector)) return;
+            return node;
+         });
+      }
+
+      var operation = selector.shift (), output = [];
 
       dale.stop (selector, false, function (v, k) {
          var elements = c.find (v);
@@ -92,12 +128,12 @@ Please refer to readme.md to read the annotated source (but not yet!).
       return output;
    }
 
-   // *** DOM OPERATIONS ***
+   // *** DOM FUNCTIONS ***
 
    c.empty = function (selector) {
       c (selector, function (element) {
-         dale.do (c.nodeListToArray (element.getElementsByTagName ('*')), function (v) {
-            v.remove ();
+         dale.go (c.nodeListToArray (element.getElementsByTagName ('*')), function (v) {
+            if (v.parentNode) v.parentNode.removeChild (v);
          });
       });
    }
@@ -142,11 +178,11 @@ Please refer to readme.md to read the annotated source (but not yet!).
             /^[a-zA-Z_:][a-zA-Z_:0-9.\-\u0080-\uffff]*$/,
             'each', teishi.test.match
          ],
-         ['attribute values', attributes, ['integer', 'string', 'null'], 'eachOf']
+         ['attribute values', attributes, ['integer', 'float', 'string', 'null'], 'eachOf']
       ])) return false;
 
       c (selector, function (element) {
-         dale.do (attributes, function (v, k) {
+         dale.go (attributes, function (v, k) {
             if       (css)        element.style [k] = v === null ? '' : v;
             else if  (v === null) element.removeAttribute (k);
             else                  element.setAttribute    (k, v);
@@ -155,23 +191,19 @@ Please refer to readme.md to read the annotated source (but not yet!).
       });
    }
 
-   // *** NON-DOM OPERATIONS ***
+   // *** NON-DOM FUNCTIONS ***
 
    c.ready = function (fun) {
-      if (document.addEventListener) return document.addEventListener ('DOMContentLoaded', fun);
-      // http://stackoverflow.com/questions/799981/document-ready-equivalent-without-jquery
-      if (document.attachEvent) {
-         document.attachEvent ('onreadystatechange', function () {
-            if (document.readyState === 'complete') fun ();
-         });
-      }
-      else fun ();
+      if (window.addEventListener) return window.addEventListener ('load', fun, false);
+      if (window.attachEvent)      return window.attachEvent      ('onload', fun);
+      var interval = setInterval (function () {
+         if (document.readyState === 'complete') fun () || clearInterval (interval);
+      }, 10);
    }
 
    c.cookie = function (cookie) {
       if (cookie === false) {
-         return dale.do (document.cookie.split (/;\s*/), function (v) {
-            // https://stackoverflow.com/a/27374365
+         return dale.go (document.cookie.split (/;\s*/), function (v) {
             document.cookie = v.replace (/^ +/, '').replace (/=.*/, '=;expires=' + new Date ().toUTCString ())
             return v;
          });
@@ -187,8 +219,8 @@ Please refer to readme.md to read the annotated source (but not yet!).
 
    c.ajax = function (method, path, headers, body, callback) {
       method   = method   || 'GET';
-      body     = body     || '';
       headers  = headers  || {};
+      body     = body     || '';
       callback = callback || function () {};
       if (teishi.stop ('c.ajax', [
          ['method',   method,   'string'],
@@ -197,18 +229,18 @@ Please refer to readme.md to read the annotated source (but not yet!).
          ['callback', callback, 'function']
       ])) return false;
 
-      var r = new XMLHttpRequest ();
+      var r = window.XMLHttpRequest ? new XMLHttpRequest () : new ActiveXObject ('Microsoft.XMLHTTP');
       r.open (method.toUpperCase (), path, true);
       if (teishi.complex (body) && teishi.t (body, true) !== 'formdata') {
          headers ['content-type'] = headers ['content-type'] || 'application/json';
          body = teishi.s (body);
       }
-      dale.do (headers, function (v, k) {
+      dale.go (headers, function (v, k) {
          r.setRequestHeader (k, v);
       });
       r.onreadystatechange = function () {
          if (r.readyState !== 4) return;
-         if (r.status !== 200)   return callback (r);
+         if (r.status !== 200 && r.status !== 304) return callback (r);
          var json;
          var res = {
             xhr: r,
@@ -225,57 +257,19 @@ Please refer to readme.md to read the annotated source (but not yet!).
       return {headers: headers, body: body, xhr: r};
    }
 
-   // *** POLYFILL ***
-
-   c.polyfill = function () {
-
-      var newElement = function () {
-         return document.createElement ('_');
-      }
-
-      // https://gist.github.com/eligrey/1276030
-      if (! newElement ().insertAdjacentHTML) {
-
-         HTMLElement.prototype.insertAdjacentHTML = function (position, html) {
-
-            var This = this, container = newElement (), Parent = This.parentNode, node, firstChild, nextSibling;
-
-            container.innerHTML = html;
-
-            if      (position === 'beforeBegin') {
-               while (node = container.firstChild) Parent.insertBefore (node, This);
-            }
-            else if (position === 'afterBegin') {
-               firstChild = This.firstChild;
-               while (node = container.lastChild)  This.insertBefore (node, firstChild);
-            }
-            else if (position === 'beforeEnd') {
-               while (node = container.firstChild) This.appendChild (node);
-            }
-            else {
-               nextSibling = This.nextSibling;
-               while (node = container.lastChild)  Parent.insertBefore (node, nextSibling)
-            }
+   c.loadScript = function (src, callback) {
+      c.ajax ('get', src, {}, '', function (error, data) {
+         if (error) return callback (error);
+         var script = document.createElement ('script');
+         try {
+            script.appendChild (document.createTextNode (data.body));
          }
-      }
-
-      // https://developer.mozilla.org/en-US/docs/Web/API/ChildNode/remove
-      if (! Element.prototype.remove) {
-         Element.prototype.remove = function () {
-            if (this.parentNode) this.parentNode.removeChild (this);
+         catch (error) {
+            script.text = data.body;
          }
-      }
-
-      if (! Array.prototype.indexOf) {
-         Array.prototype.indexOf = function (element, from) {
-            var result = dale.stopNot (from ? this.slice (from) : this, undefined, function (v, k) {
-               if (element === v) return k;
-            });
-            return result === undefined ? -1 : result;
-         }
-      }
+         document.body.appendChild (script);
+         callback (null, data);
+      });
    }
-
-   c.polyfill ();
 
 }) ();

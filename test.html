@@ -5,53 +5,71 @@
       <title>Cocholate!</title>
    </head>
    <body>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@ac36810de20ee18d5d5077bd2ccb94628d621e58/dale.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@e1d6313b4269c54d163ac2097d6713d9e9e3f213/teishi.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@d1b5b3f9e7207383c335108541cf6942db84adaa/lith.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/douglascrockford/JSON-js@aef828bfcd7d5efaa41270f831f8d27d5eef3845/json2.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@9fe30369a2acef87ed062131c8634d858b8f3143/dale.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@8442dc09f0518b93fc9b5fbdf5268d589b7d54fd/teishi.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@ae750ea2a5eb44c87e65e8a7f4ee9c0a9068a628/lith.js"></script>
       <script src="cocholate.js"></script>
       <script>
 
-         var dale   = window.dale;
-         var teishi = window.teishi;
-         var lith   = window.lith;
-         var c      = window.c;
+         window.onerror = function () {
+            alert (dale.go (arguments, function (v) {return v.toString ()}).join (' '));
+         }
 
-         var type = teishi.t, log = teishi.l;
+         window.c.ready (function () {
 
-         var Test = function (fun) {
-            var error = fun ();
-            if (error) console.log (error);
-            if (error) throw new Error (error);
-         };
+            var dale   = window.dale;
+            var teishi = window.teishi;
+            var lith   = window.lith;
+            var c      = window.c;
 
-         c.ready (function () {
+            var type = teishi.t, log = teishi.l;
+
+            var Test = function (fun) {
+               var error = fun ();
+               if (error) {
+                  alert (error);
+                  throw new Error (error);
+               }
+            };
 
             Test (function () {
                if (c ('selector', /invalidfun/) !== false) return 'Invalid function was considered valid.';
                if (c ('body').length !== 1)                return 'Find could not locate body.';
 
                c.fill ('body', lith.g ([
-                  ['div', {class: 'hola'}, 'Content'],
+                  ['div', {"class": 'hola'}, 'Content'],
                   ['div', {id: 'hola'}, 'Content']
                ]));
 
-               if (c ('.hola') [0].innerHTML !== 'Content')    return 'Class selector didn\'t work.';
-               if (c ('#hola').innerHTML     !== 'Content')    return 'Id selector didn\'t work.';
-               if (c ('div#hola').innerHTML     !== 'Content') return 'Id selector didn\'t work.';
+               if (c ('.hola') [0].innerHTML !== 'Content') return 'Class selector didn\'t work.';
+               if (c ('#hola').innerHTML     !== 'Content') return 'Id selector didn\'t work.';
+               if (c ('div#hola').innerHTML  !== 'Content') return 'Id selector didn\'t work.';
 
-               if (type (c ('#hola[name="name"]')) !== 'array') return 'Non id selector starting with # didn\'t work.';
-               if (type (c ('#hola>div')) !== 'array')          return 'Non id selector starting with # didn\'t work.';
+               if (document.querySelectorAll) {
+                  if (type (c ('#hola[name="name"]')) !== 'array') return 'Non id selector starting with # didn\'t work.';
+                  if (type (c ('#hola>div')) !== 'array')          return 'Non id selector starting with # didn\'t work.';
+               }
+               else {
+                  if (c ('#hola[name="name"]') !== false) return 'Non id selector starting with # wasn\'t rejected.';
+                  if (c ('#hola[name="name"]') !== false) return 'Non id selector starting with # wasn\'t rejected.';
+               }
 
                c.fill ('body', lith.g ([
                   ['div', {id: 'hola'}, [
-                     ['p', {class: 'a'}, 'Yes.'],
-                     ['p', {class: 'b'}, 'No.'],
+                     ['p', {"class": 'a'}, 'Yes.'],
+                     ['p', {"class": 'b'}, 'No.'],
                   ]]
                ]));
 
-               if (c ('body').length !== 1)      return 'c.empty didn\'t work.';
-               if (c ('body p').length !== 2)    return 'c.fill didn\'t work.';
-               if (c ('#hola p.a').length !== 1) return 'Non-id selector with id first element didn\'t work.';
+               if (c ('body').length !== 1) return 'c.empty didn\'t work.';
+               if (c ('p').length !== 2)    return 'c.fill didn\'t work.';
+               if (document.querySelectorAll) {
+                  if (c ('#hola p.a').length !== 1) return 'Non-id selector with id first element didn\'t work.';
+               }
+               else {
+                  if (c ({from: c ('#hola'), selector: 'p.a'}).length !== 1) return 'Non-id selector with id first element didn\'t work.';
+               }
 
                if (c.fill ('body', /notastring/) !== false) return 'c.fill accepted invalid HTML.';
 
@@ -61,88 +79,127 @@
 
                if (c ([':or', [':or', 'div', 'p']]).length !== 3) return 'nested or selector didn\'t work.';
 
-               if (c ([':and', 'div *', 'p']).length !== 2) return 'and selector didn\'t work.';
+               if (document.querySelectorAll) {
+                  if (c ([':and', 'div *', 'p']).length !== 2) return 'and selector didn\'t work.';
+               }
 
                if (c ([':and', 'div', 'p']).length !== 0) return 'and selector didn\'t work.';
 
                if (c ([':and', [':or', 'div', 'p']]).length !== 3) return 'and selector didn\'t work.';
 
-               if (c ([':not', 'div#hola']).length !== 7) return 'not selector didn\'t work.';
-               if (c ([':not', 'body']).length !== 7) return 'not selector didn\'t work.';
-               if (c ([':not', 'div#hola', 'body']).length !== 6) return 'not selector didn\'t work.';
-               if (c ([':not', 'div#hola *']).length !== 6) return 'not selector didn\'t work.';
-               if (c ([':not', 'div', 'p']).length !== 5) return 'not selector didn\'t work.';
-               if (c ([':not', [':or', 'div', 'p']]).length !== 5) return 'not selector didn\'t work.';
-               if (c ([':and', [':not', 'div#hola'], [':not', 'p']]).length !== 5) return 'not selector didn\'t work.';
+               var all = c ([':not', 'h5']).length;
 
-               if (c ([':and', 'body *', [':or', 'div', 'p']]).length !== 3) return 'nested selector didn\'t work.';
+               if (c ([':not', 'div#hola']).length !== all - 1) return 'not selector didn\'t work #1.';
+               if (c ([':not', 'body']).length !== all - 1) return 'not selector didn\'t work #2.';
+               if (c ([':not', 'div#hola', 'body']).length !== all - 2) return 'not selector didn\'t work #3.';
+               if (document.querySelectorAll) {
+                  if (c ([':not', 'div#hola *']).length !== all - 2) return 'not selector didn\'t work #4.';
+               }
+               if (c ([':not', 'div', 'p']).length !== all - 3) return 'not selector didn\'t work #5.';
+               if (c ([':not', [':or', 'div', 'p']]).length !== all - 3) return 'not selector didn\'t work #6.';
+               if (c ([':and', [':not', 'div#hola'], [':not', 'p']]).length !== all - 3) return 'not selector didn\'t work #7.';
+
+               if (document.querySelectorAll) {
+                  if (c ([':and', 'body *', [':or', 'div', 'p']]).length !== 3) return 'nested selector didn\'t work #8.';
+               }
+               else {
+                  if (c ([':and', {from: c ('body') [0], selector: '*'}, [':or', 'div', 'p']]).length !== 3) return 'nested selector didn\'t work #8.';
+               }
 
                c.fill ('body', lith.g ([
-                  ['div', {class: 'inner'}],
-                  ['div', {id: 'container'}, ['div', {class: 'inner'}]]
+                  ['div', {"class": 'inner'}],
+                  ['div', {id: 'container'}, [
+                     ['div', {"class": 'inner foobar'}],
+                     ['div', {"class": 'innerTree'}],
+                     ['div', {"class": 'foobar inner'}],
+                  ]]
                ]));
 
-               if (c ({selector: 'div.inner', from: c ('#container')}).length !== 1) return 'from selector didn\'t work.';
+               if (c ({selector: 'div.inner'}) !== false) return 'undefined from selector accepted.';
+               if (c ({selector: 'div.inner', from: c ('body')}) !== false) return 'array from selector accepted.';
+               if (c ({selector: 'div.inner', from: c ('#container')}).length !== 2) return 'from selector didn\'t work.';
 
-               c.fill ('body', lith.g (['div', {id: 'container'}, ['div', {id: 'inner'}]]));
+               c.fill ('body', lith.g (['div', {id: 'container', style: 'border: solid 1px lime'}, [['div', {id: 'inner', style: 'border: solid 1px blue'}, 'inner'], 'container']]));
 
-               c.place ('#container', 'beforeBegin', lith.g (['div', {id: 'beforecontainer'}]));
-               if (c ('body div') [0].getAttribute ('id') !== 'beforecontainer') return 'c.place beforeBegin didn\'t work';
+               c.place ('#container', 'beforeBegin', lith.g (['div', {id: 'beforecontainer'}, 'beforecontainer']));
+               if (c ('div') [0].getAttribute ('id') !== 'beforecontainer') return 'c.place beforeBegin didn\'t work';
 
-               c.place ('#container', 'afterEnd', lith.g (['div', {id: 'aftercontainer'}]));
-               if (c ('body div') [c ('body div').length - 1].getAttribute ('id') !== 'aftercontainer') return 'c.place afterEnd didn\'t work';
+               c.place ('#container', 'afterEnd', lith.g (['div', {id: 'aftercontainer'}, 'aftercontainer']));
+               if (c ('div') [c ('div').length - 1].getAttribute ('id') !== 'aftercontainer') return 'c.place afterEnd didn\'t work';
 
-               c.place ('#container', 'afterBegin', lith.g (['div', {id: 'beforeinner'}]));
-               if (c ('#container div') [0].getAttribute ('id') !== 'beforeinner') return 'c.place afterBegin didn\'t work';
+               c.place ('#container', 'afterBegin', lith.g (['div', {id: 'beforeinner'}, 'beforeinner']));
+               if (c ({from: c ('#container'), selector: 'div'}) [0].getAttribute ('id') !== 'beforeinner') return 'c.place afterBegin didn\'t work';
 
-               c.place ('#container', 'beforeEnd', lith.g (['div', {id: 'afterinner'}]));
-               if (c ('#container div') [2].getAttribute ('id') !== 'afterinner') return 'c.place beforeEnd didn\'t work';
+               c.place ('#container', 'beforeEnd', lith.g ([['div', {id: 'afterinner'}, 'afterinner'], ['div', {id: 'afterinner2'}, 'afterinner2']]));
+               if (c ({from: c ('#container'), selector: 'div'}) [2].getAttribute ('id') !== 'afterinner') return 'c.place beforeEnd didn\'t work';
+               if (c ({from: c ('#container'), selector: 'div'}) [3].getAttribute ('id') !== 'afterinner2') return 'c.place beforeEnd didn\'t work';
 
-               if (c.set ('#container div', {'^': 'someclass'}) !== false) return 'c.set accepted invalid input';
-               c.set ('#container div', {class: 'someclass'});
+               var cdiv = document.querySelectorAll ? '#container div' : {from: c ('#container'), selector: 'div'};
 
-               if (c ('#container div.someclass').length !== 3) 'c.set didn\'t work.';
+               if (c.set (cdiv, {'^': 'someclass'}) !== false) return 'c.set accepted invalid input';
+               c.set (cdiv, {"class": 'someclass'});
 
-               if (c.get ('#container div', 'class') [0].class !== 'someclass') return 'c.get didn\'t work.';
+               if (c (cdiv).length !== 3) 'c.set didn\'t work.';
 
-               c.set ('#container div', {width: '200px'}, true);
+               if (c.get (cdiv, 'class') [0] ['class'] !== 'someclass') return 'c.get didn\'t work #1.';
 
-               if (c.get ('#container div', ['height', 'width'], true) [0].height !== null) return 'multiple c.get didn\'t work.';
-               if (c.get ('#container div', ['height', 'width'], true) [0].width  !== '200px') return 'multiple c.get didn\'t work.';
+               c.set (cdiv, {width: '200px', opacity: 0.9}, true);
 
-               c.fill ('body', lith.g (dale.do (['red', 'blue', 'green'], function (v, k) {
-                  return ['p', {id: 'a' + k, class: v}];
+               if (c.get (cdiv, ['height', 'width'], true) [0].height !== null) return 'multiple c.get didn\'t work.';
+               if (c.get (cdiv, ['height', 'width'], true) [0].width  !== '200px') return 'multiple c.get didn\'t work.';
+
+               c.fill ('body', lith.g (dale.go (['red', 'blue', 'green'], function (v, k) {
+                  return ['p', {id: 'a' + k, "class": v}];
                })));
 
-               if (JSON.stringify (c.get ('p',    ['id', 'class'])) !== '[{"id":"a0","class":"red"},{"id":"a1","class":"blue"},{"id":"a2","class":"green"}]') return 'c.get didn\'t work.';
+               if (document.querySelectorAll) {
+                  if (JSON.stringify (c.get ('p',    ['id', 'class'])) !== '[{"id":"a0","class":"red"},{"id":"a1","class":"blue"},{"id":"a2","class":"green"}]') return 'c.get didn\'t work #2.';
 
-               if (JSON.stringify (c.get ('#a0', ['id', 'class']))  !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work.';
-               if (JSON.stringify (c.get ('p#a0', ['id', 'class'])) !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work.';
+                  if (JSON.stringify (c.get ('#a0', ['id', 'class']))  !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #3.';
+                  if (JSON.stringify (c.get ('p#a0', ['id', 'class'])) !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #4.';
+               }
+               else {
+                  // IE6-7 use className, FF3 uses class
+                  if (JSON.stringify (c.get ('p', ['id', 'className'])) !== '[{"id":"a0","className":"red"},{"id":"a1","className":"blue"},{"id":"a2","className":"green"}]' && JSON.stringify (c.get ('p', ['id', 'class'])) !== '[{"id":"a0","class":"red"},{"id":"a1","class":"blue"},{"id":"a2","class":"green"}]') return 'c.get didn\'t work #2.';
 
-               c.fill ('body', lith.g (dale.do (['red', 'blue', 'green'], function (v) {
+                  if (JSON.stringify (c.get ('#a0', ['id', 'className']))  !== '{"id":"a0","className":"red"}' && JSON.stringify (c.get ('#a0', ['id', 'class']))  !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #3.';
+                  if (JSON.stringify (c.get ('p#a0', ['id', 'className'])) !== '{"id":"a0","className":"red"}' && JSON.stringify (c.get ('p#a0', ['id', 'class'])) !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #4.';
+               }
+
+               c.fill ('body', lith.g (dale.go (['red', 'blue', 'green'], function (v) {
                   return ['p', {style: 'color: ' + v}];
                })));
 
-               if (JSON.stringify (c.get ('p', 'color', true)) !== '[{"color":"red"},{"color":"blue"},{"color":"green"}]') return 'c.get didn\'t work.';
-
+               // Interestingly enough, Opera 11.1 and below convert CSS colors to hexadecimal, hence the need for the second comparison.
+               if (JSON.stringify (c.get ('p', 'color', true)) !== '[{"color":"red"},{"color":"blue"},{"color":"green"}]' && JSON.stringify (c.get ('p', 'color', true)) !== '[{"color":"#ff0000"},{"color":"#0000ff"},{"color":"#008000"}]') return 'c.get didn\'t work #5.';
                c.fill ('body', lith.g (['p']));
 
-               c.set ('body p', {class: 'someclass'});
-               if (JSON.stringify (c.get ('body p', 'class')) !== '[{"class":"someclass"}]') return 'c.set didn\'t work.';
+               var bodyp = document.querySelectorAll ? 'body p' : {from: c ('body') [0], selector: 'p'};
 
-               c.set ('body p', {class: null});
-               if (JSON.stringify (c.get ('body p', ['class', 'another'])) !== '[{"class":null,"another":null}]') return 'c.set didn\'t work.';
+               c.set (bodyp, {"class": 'someclass'});
 
-               c.set ('body p', {color: 'red'}, true);
-               if (JSON.stringify (c.get ('body p', 'color', true)) !== '[{"color":"red"}]') return 'c.set didn\'t work.';
+               if (JSON.stringify (c.get (bodyp, 'class')) !== '[{"class":"someclass"}]') return 'c.set didn\'t work #1.';
 
-               c.set ('body p', {color: null}, true);
-               if (JSON.stringify (c.get ('body p', 'color', true)) !== '[{"color":null}]') return 'c.set didn\'t work.';
+               c.set (bodyp, {"class": null});
+               if (JSON.stringify (c.get (bodyp, ['class', 'another'])) !== '[{"class":null,"another":null}]') return 'c.set didn\'t work #2.';
+
+               c.set (bodyp, {color: 'red'}, true);
+               if (JSON.stringify (c.get (bodyp, 'color', true)) !== '[{"color":"red"}]' && JSON.stringify (c.get (bodyp, 'color', true)) !== '[{"color":"#ff0000"}]') return 'c.set didn\'t work #3.';
+
+               c.set (bodyp, {color: null}, true);
+               if (JSON.stringify (c.get (bodyp, 'color', true)) !== '[{"color":null}]') return 'c.set didn\'t work #4.';
 
                c.fill ('body', lith.g ([
                   ['input', {id: 'wha', value: 1}],
                   ['input', {id: 'other'}]
                ]));
+
+               // Check that DOM functions can take an invalid selector without throwing an exception.
+               c.empty (/abc/);
+               c.fill  (/abc/, 'abc');
+               c.place (/abc/, 'beforeBegin', 'abc');
+               c.get   (/abc/, 'class');
+               c.set   (/abc/, {'class': null});
 
                var wha;
                var styl;
@@ -151,23 +208,46 @@
                   styl = this.style.color;
                }
                c.set ('#wha', {value: 2});
-               if (wha !== '2') return 'onchange wasn\'t fired by c.set';
+               if (wha !== '2') return 'onchange wasn\'t fired by c.set #1.';
                c.set ('#wha', {color: 'lime'}, true);
-               if (styl !== 'lime') return 'onchange wasn\'t fired by c.set';
+               if (styl !== 'lime' && styl !== '#00ff00') return 'onchange wasn\'t fired by c.set #2.';
 
                c.set ('#wha', {value: 3}, false, true);
                c.set ('#wha', {color: 'magenta'}, true, true);
-               if (wha !== '2') return 'onchange wasn\'t detriggered by c.set';
-               if (styl !== 'lime') return 'onchange wasn\'t fired by c.set';
+               if (wha !== '2') return 'onchange wasn\'t detriggered by c.set.';
+               if (styl !== 'lime' && styl !== '#00ff00') return 'onchange wasn\'t fired by c.set #3.';
+
+               // Check insertAdjacentElement against empty div.
+               c.fill ('body', lith.g (['div', {id: 'reference'}]));
+               c.place ('#reference', 'beforeBegin', 'a');
+               c.fill ('body', lith.g (['div', {id: 'reference'}]));
+               c.place ('#reference', 'afterBegin', 'b');
+               c.fill ('body', lith.g (['div', {id: 'reference'}]));
+               c.place ('#reference', 'beforeEnd', 'c');
+               c.fill ('body', lith.g (['div', {id: 'reference'}]));
+               c.place ('#reference', 'afterEnd', 'd');
+               c.fill ('body', '');
+               c.fill ('body', 'text');
 
                if (c.cookie ('username=John Doe; expires=Thu, 18 Dec 2013 12:00:00 UTC').username !== 'John Doe') return 'c.cookie didn\'t work.';
 
                if (c.ajax (/invalidmethod/, /invalidpath/) !== false) return 'c.ajax didn\'t validate its input.';
 
                var error;
-               var ajax = c.ajax ('get', 'notaroute', null, null, function (request) {
-                  if (! error) log ('Success', 'All tests were successful!');
-                  if (! error) c.fill ('body', lith.g ('All tests were successful!'));
+               var ajax = c.ajax ('get', 'notaroute', null, null, function () {
+                  if (error) return;
+                  c.loadScript ('cocholate.js', function () {
+                     // We ignore CORS errors when running the test locally.
+                     if (! (arguments [0] && arguments [0].status === 0)) {
+                        if (arguments.length !== 2) throw new Error ('Script was not loaded.');
+                     }
+
+                     c.loadScript ('nosuchscript.js', function () {
+                        if (arguments.length !== 1) throw new Error ('Invalid script was loaded.');
+                        if (! error) log ('Success', 'All tests were successful!');
+                        if (! error) c.fill ('body', lith.g ('All tests were successful!'));
+                     });
+                  });
                });
 
                if (type (ajax) !== 'object' || type (ajax.headers) !== 'object' || type (ajax.body) !== 'string' || type (ajax.xhr) !== 'object') {
