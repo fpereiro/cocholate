@@ -28,7 +28,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@9fe30369a2acef87ed062131c8634d858b8f3143/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@8442dc09f0518b93fc9b5fbdf5268d589b7d54fd/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@ /cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@f0cc52d9936132b4daa6868b5e07d4841fce0a9f/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -55,9 +55,7 @@ As soon as you include cocholate, it will be available on `window.c`.
 var c = window.c;
 ```
 
-For the rest of the readme we'll assume that you created your instance of cocholate and named it `c`.
-
-A couple notes regarding polyfills:
+A couple notes regarding [polyfills](https://en.wikipedia.org/wiki/Polyfill_(programming)):
 
 - If cocholate detects that the DOM method `insertAdjacentHTML` is not defined, cocholate will set it (this will [only happen](https://caniuse.com/#feat=insertadjacenthtml) in Firefox 7 and below and Safari 3 and below).
 - Because cocholate uses [teishi](https://github.com/fpereiro/teishi), the `indexOf` method for arrays will also be set (this will happen only in Firefox 1, Edge 12 and below and Internet Explorer 8 and below).
@@ -378,7 +376,7 @@ A function that gets executed when the HTML page and all its resources (includin
 
 This function is handy to prevent executing your application code before all scripts are loaded. This will happen automatically on most browsers if you place all your scripts at the bottom of the body - the exception is Internet Explorer 8 and below, which seem to run the scripts in parallel.
 
-This function is also handy if you want to wait for all stylesheets to load before drawing views with javascript.
+This function is also handy if you want to wait for all stylesheets to load before executing your script.
 
 ### `c.cookie`
 
@@ -454,7 +452,7 @@ We create an alias to `teishi.t`, the function for finding out the type of an el
 
 ### Polyfill for `insertAdjacentHTML`
 
-We will define a [polyfill](https://en.wikipedia.org/wiki/Polyfill_(programming)) for `insertAdjacentHTML`, which will be active in old versions of Safari and Firefox. It is based on [Eli Grey's polyfill](https://gist.github.com/eligrey/1276030).
+We will define a [polyfill](https://en.wikipedia.org/wiki/Polyfill_(programming)) for `insertAdjacentHTML`, which will be necessary in old versions of Safari and Firefox. It is based on [Eli Grey's polyfill](https://gist.github.com/eligrey/1276030).
 
 We set the function only if it's not defined. The function takes two arguments, `position` and `html`.
 
@@ -471,7 +469,7 @@ We create a container element and then we set its `innerHTML` property to the `h
 
 We now iterate the outermost elements inside `container`. By outermost, I mean that only those elements that are direct children of `container` will be iterated - whereas elements that are inside these top-level children will not be iterated.
 
-We're, however, using a strange way of iterating the elements; instead of using a for loop or an equivalent functional construct, we're executing the same piece of code as long as container has one element. How can this work without setting us for an infinite loop? Let's see it in a minute.
+We're, however, iterating the elements in a rather strange way. Instead of using a for loop or an equivalent functional construct, we're executing the same piece of code as long as container has one element. How can this work without setting us for an infinite loop? Let's see it in a minute.
 
 ```javascript
       while (container.firstChild) {
