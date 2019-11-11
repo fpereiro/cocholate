@@ -30,7 +30,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@aad320880d95ca9aea84a6cf30f95949223b3f12/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@979a71d47b0038954dc28b94da95a1900d0aaf92/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@f9e95cd160771e514779bf01d4444d89c2e64dd2/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -1144,7 +1144,7 @@ In all browsers that don't support the constructor and aren't Internet Explorer,
          }
 ```
 
-If the browser supports the [`dispatchEvent` method] (https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent), (which goes for all the browsers we support except for Internet Explorer 8 and below), we will invoke it, passing the event to it.
+If the browser supports the [`dispatchEvent` method](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent), (which goes for all the browsers we support except for Internet Explorer 8 and below), we will invoke it, passing the event to it.
 
 ```javascript
          if (element.dispatchEvent) return element.dispatchEvent (ev);
