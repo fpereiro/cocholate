@@ -6,7 +6,9 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v2.0.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v2.1.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+
+cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
 ## Installation
 
@@ -26,9 +28,9 @@ cocholate is written in Javascript. You can use it in the browser by sourcing th
 Or you can use these links to the latest version - courtesy of [jsDelivr](https://jsdelivr.com).
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@9fe30369a2acef87ed062131c8634d858b8f3143/dale.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@8442dc09f0518b93fc9b5fbdf5268d589b7d54fd/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@f0cc52d9936132b4daa6868b5e07d4841fce0a9f/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@aad320880d95ca9aea84a6cf30f95949223b3f12/dale.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@979a71d47b0038954dc28b94da95a1900d0aaf92/teishi.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -366,9 +368,21 @@ c.set ('#hello', {value: 2}, false, true);
 c.set ('#hello', {color: 'lime'}, true, true);
 ```
 
+### `c.fire`
+
+This function creates an event and triggers it on the specified elements. It takes an `eventType` as its second argument, a string that determines which argument is fired (for example, `'click'`). This function has no meaningful return value.
+
+```javascript
+c.fire ('#button', 'click');
+```
+
+`c.fire` is useful for test scripts that simulate user interactions.
+
+Note: if you're using this function in Internet Explorer 8 and below, you need to prefix `eventType` with `'on'`: for example, `'click'` should be `'onclick'`.
+
 ## Non-DOM functions
 
-Besides the five functions for DOM manipulation, there are four more for a few things that are convenient to have around.
+Besides the six DOM functions, there are four more for a few things that are convenient to have around.
 
 ### `c.ready`
 
@@ -415,13 +429,13 @@ If the script is successfully fetched, `callback` will receive two arguments (`n
 
 ## Source code
 
-The complete source code is contained in `cocholate.js`. It is about 280 lines long.
+The complete source code is contained in `cocholate.js`. It is about 290 lines long.
 
 Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v2.0.0
+cocholate - v2.1.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -431,23 +445,29 @@ Please refer to readme.md to read the annotated source.
 
 ### Setup
 
-We wrap the entire file in a self-executing anonymous function. This practice is commonly named [the javascript module pattern](http://yuiblog.com/blog/2007/06/12/module-pattern/). The purpose of it is to wrap our code in a closure and hence avoid making the local variables we define here to be available outside of this module. A cursory test indicates that local variables exceed the scope of a file in the browser, but not in node.js. Globals exceed their scope despite this pattern - but we won't be using them.
+We wrap the entire file in a self-executing anonymous function. This practice is commonly named [the javascript module pattern](http://yuiblog.com/blog/2007/06/12/module-pattern/). The purpose of it is to wrap our code in a closure and hence avoid making the local variables we define here to be available outside of this module.
 
 ```javascript
 (function () {
 ```
 
-We require [dale](http://github.com/fpereiro/dale) and [teishi](http://github.com/fpereiro/teishi).
+If we're in node.js, we print an error and return `undefined`.
+
+```javascript
+   if (typeof exports === 'object') return console.log ('cocholate only works in a browser!');
+```
+
+We require [dale](http://github.com/fpereiro/dale) and [teishi](http://github.com/fpereiro/teishi). Note that, in the browser, `dale` and `teishi` will be loaded as global variables.
 
 ```javascript
    var dale   = window.dale;
    var teishi = window.teishi;
 ```
 
-We create an alias to `teishi.t`, the function for finding out the type of an element.
+We create an alias to `teishi.type`, the function for finding out the type of an element. We do the same for `teishi.clog`, a function for printing logs that also returns `false`.
 
 ```javascript
-   var type   = teishi.t;
+   var type = teishi.type, clog = teishi.clog;
 ```
 
 ### Polyfill for `insertAdjacentHTML`
@@ -702,7 +722,7 @@ An implementation note: we write this last validation rule as a function and not
 
 ```javascript
                function () {
-                  if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return teishi.l ('teishi.v', 'selector.from passed to cocholate must be a DOM element.');
+                  if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return clog ('teishi.v', 'selector.from passed to cocholate must be a DOM element.');
                   return true;
                },
 ```
@@ -752,7 +772,7 @@ We are going to provide limited support for selectors; namely, we will only supp
 If `selector` doesn't conform to any of these shapes, we will print an error and return false.
 
 ```javascript
-         if (selector !== '*' && ! selector.match (/^[a-z0-9]*(#|\.)?[a-z0-9]+$/i)) return teishi.l ('The selector ' + selector + ' is not supported in IE <= 7 or Firefox <= 3.');
+         if (selector !== '*' && ! selector.match (/^[a-z0-9]*(#|\.)?[a-z0-9]+$/i)) return clog ('The selector ' + selector + ' is not supported in IE <= 7 or Firefox <= 3.');
 ```
 
 If we're here, `selector` is supported. We will now determine what's the criterium for selecting elements; if there's a `#` in the selector, it will be by `id`; if there's a `.`, it will be by `class`. If there's neither, we'll set it to `undefined` (in which case it means that we will select elements by tag).
@@ -994,7 +1014,7 @@ If the `css` flag is disabled, we will instead return the element's attribute (a
    }
 ```
 
-We now define `c.set`, the fifth and last DOM function of the library. It is similar to `c.get`, but instead of returning attributes, it sets them. It takes four arguments, `selector`, `attributes`, `css` and `notrigger` - the last two are flags.
+We now define `c.set`. It is similar to `c.get`, but instead of returning attributes, it sets them. It takes four arguments, `selector`, `attributes`, `css` and `notrigger` - the last two are flags.
 
 ```javascript
    c.set  = function (selector, attributes, css, notrigger) {
@@ -1069,6 +1089,77 @@ If the `element` has an `onchange` event listener, and the `notrigger` flag is *
 
 ```javascript
          if (element.onchange && ! notrigger) element.onchange ();
+```
+
+There's nothing else to do, so we close the function. Note that we don't return any values.
+
+```javascript
+      });
+   }
+```
+
+We now define `c.fire`, the last DOM function. For each matched element, this function creates an event and dispatches it to the element. This function takes two arguments: `selector` and `eventType`.
+
+```javascript
+   c.fire = function (selector, eventType) {
+```
+
+If `eventType` is not a string, we print an error and return `false`.
+
+```javascript
+      if (teishi.stop ('c.fire', ['event type', eventType, 'string'])) return false;
+```
+
+For each of the elements that are matched by `selector`, we will invoke the following function.
+
+```javascript
+      c (selector, function (element) {
+```
+
+We define a local variable `ev` to hold the event we are about to create.
+
+```javascript
+         var ev;
+```
+
+We first try to create the event using the [Event constructor](https://developer.mozilla.org/en-US/docs/Web/API/Event/Event), which should work for most browsers. Note we pass `eventType` to the constructor so the event is of the desired type.
+
+```javascript
+         try {
+            ev = new Event (eventType);
+         }
+```
+
+If the event constructor is not supported, we use either the [`createEvent` method](https://developer.mozilla.org/en-US/docs/Web/API/Event/createEvent) or the [`createEventObject` method](https://msdn.microsoft.com/en-us/ie/ms536390(v=vs.94)). The latter method is only for Internet 8 and below.
+
+```javascript
+         catch (error) {
+            ev = document.createEvent ? document.createEvent ('Event') : document.createEventObject ();
+```
+
+In all browsers that don't support the constructor and aren't Internet Explorer, we invoke the [`initEvent` method](https://developer.mozilla.org/en-US/docs/Web/API/Event/initEvent) and pass to it `eventType`. We pass extra `false` arguments since they're required in old versions of Firefox.
+
+```javascript
+            if (document.createEvent) ev.initEvent (eventType, false, false);
+         }
+```
+
+If the browser supports the [`dispatchEvent` method] (https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/dispatchEvent), (which goes for all the browsers we support except for Internet Explorer 8 and below), we will invoke it, passing the event to it.
+
+```javascript
+         if (element.dispatchEvent) return element.dispatchEvent (ev);
+```
+
+For Internet Explorer 8 and below, we instead invoke `fireEvent`. Note that we pass both `eventType` and the event itself.
+
+```javascript
+         if (element.fireEvent)     return element.fireEvent     (eventType, ev);
+```
+
+If the browser supports neither method, we print an error.
+
+```javascript
+         return clog ('c.fire error', 'Unfortunately, this browser supports neither EventTarget.dispatchEvent nor element.fireEvent.');
 ```
 
 There's nothing else to do, so we close the function. Note that we don't return any values.
@@ -1246,7 +1337,7 @@ We initialize the request, passing it the uppercased `method`, `path` and a trut
 If `body` is not a [FormData](https://developer.mozilla.org/en-US/docs/Web/API/formdata) object and it is instead a plain array or an object, we do two things:
 
 ```javascript
-      if (teishi.complex (body) && teishi.t (body, true) !== 'formdata') {
+      if (teishi.complex (body) && type (body, true) !== 'formdata') {
 ```
 
 1) Set the `content-type` header to `application/json`, unless it's already present in `headers`.

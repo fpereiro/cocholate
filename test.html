@@ -6,14 +6,14 @@
    </head>
    <body>
       <script src="https://cdn.jsdelivr.net/gh/douglascrockford/JSON-js@aef828bfcd7d5efaa41270f831f8d27d5eef3845/json2.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@9fe30369a2acef87ed062131c8634d858b8f3143/dale.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@8442dc09f0518b93fc9b5fbdf5268d589b7d54fd/teishi.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@ae750ea2a5eb44c87e65e8a7f4ee9c0a9068a628/lith.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@aad320880d95ca9aea84a6cf30f95949223b3f12/dale.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@979a71d47b0038954dc28b94da95a1900d0aaf92/teishi.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@1a364b552a1c7b7fe4525337f075960bc8388961/lith.js"></script>
       <script src="cocholate.js"></script>
       <script>
 
          window.onerror = function () {
-            alert (dale.go (arguments, function (v) {return v.toString ()}).join (' '));
+            alert (dale.go (arguments, function (v) {return v + ''}).join (' '));
          }
 
          window.c.ready (function () {
@@ -23,7 +23,7 @@
             var lith   = window.lith;
             var c      = window.c;
 
-            var type = teishi.t, log = teishi.l;
+            var type = teishi.type, clog = teishi.clog;
 
             var Test = function (fun) {
                var error = fun ();
@@ -34,6 +34,35 @@
             };
 
             Test (function () {
+
+               var counter = {};
+               window.increment = function (ev) {
+                  if (! counter [ev]) counter [ev] = 0;
+                  counter [ev]++;
+               }
+
+               c.fill ('body', lith.g ([
+                  ['input', {id: 'button', type: 'button', onclick:  'increment (event.type)'}],
+                  ['input', {id: 'text',   type: 'text',   onchange: 'increment (event.type)'}],
+               ]));
+
+               if (c.fire ('#button', /notastring/) !== false) return 'c.fire didn\'t validate its input #1.';
+               if (c.fire ('#button', 1337)         !== false) return 'c.fire didn\'t validate its input #2.';
+               if (c.fire ('#button')               !== false) return 'c.fire didn\'t validate its input #3.';
+
+               try {
+                  // This will work on any browser except for IE8 and below.
+                  c.fire ('#button', 'click');
+                  c.fire ('#text',   'change');
+               }
+               // Interesting fact: in IE8 and below, if we name the catch argument as `error`, this will conflict with the local variable `error` below!
+               catch (e) {
+                  c.fire ('#button', 'onclick');
+                  c.fire ('#text',   'onchange');
+               }
+
+               if (! teishi.eq (counter, {click: 1, change: 1})) return 'c.fire didn\'t work.';
+
                if (c ('selector', /invalidfun/) !== false) return 'Invalid function was considered valid.';
                if (c ('body').length !== 1)                return 'Find could not locate body.';
 
@@ -244,7 +273,7 @@
 
                      c.loadScript ('nosuchscript.js', function () {
                         if (arguments.length !== 1) throw new Error ('Invalid script was loaded.');
-                        if (! error) log ('Success', 'All tests were successful!');
+                        if (! error) clog ('Success', 'All tests were successful!');
                         if (! error) c.fill ('body', lith.g ('All tests were successful!'));
                      });
                   });

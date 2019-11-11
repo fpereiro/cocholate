@@ -1,5 +1,5 @@
 /*
-cocholate - v2.0.0
+cocholate - v2.1.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -15,7 +15,7 @@ Please refer to readme.md to read the annotated source.
    var dale   = window.dale;
    var teishi = window.teishi;
 
-   var type   = teishi.t;
+   var type = teishi.type, clog = teishi.clog;
 
    // *** POLYFILL FOR insertAdjacentHTML ***
 
@@ -91,7 +91,7 @@ Please refer to readme.md to read the annotated source.
                ['selector keys', dale.keys (selector), ['selector', 'from'], 'eachOf', teishi.test.equal],
                ['selector.selector', selector.selector, ['array', 'string'], 'oneOf'],
                function () {
-                  if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return teishi.l ('teishi.v', 'selector.from passed to cocholate must be a DOM element.');
+                  if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return clog ('teishi.v', 'selector.from passed to cocholate must be a DOM element.');
                   return true;
                },
             ]]
@@ -104,7 +104,7 @@ Please refer to readme.md to read the annotated source.
 
          var from = selector.from ? selector.from : document;
          selector = selectorType === 'string' ? selector : selector.selector;
-         if (selector !== '*' && ! selector.match (/^[a-z0-9]*(#|\.)?[a-z0-9]+$/i)) return teishi.l ('The selector ' + selector + ' is not supported in IE <= 7 or Firefox <= 3.');
+         if (selector !== '*' && ! selector.match (/^[a-z0-9]*(#|\.)?[a-z0-9]+$/i)) return clog ('The selector ' + selector + ' is not supported in IE <= 7 or Firefox <= 3.');
 
          var criterium = selector.match ('#') ? 'id' : (selector.match (/\./) ? 'class' : undefined);
          selector = selector.split (/#|\./);
@@ -191,6 +191,23 @@ Please refer to readme.md to read the annotated source.
       });
    }
 
+   c.fire = function (selector, eventType) {
+      if (teishi.stop ('c.fire', ['event type', eventType, 'string'])) return false;
+      c (selector, function (element) {
+         var ev;
+         try {
+            ev = new Event (eventType);
+         }
+         catch (error) {
+            ev = document.createEvent ? document.createEvent ('Event') : document.createEventObject ();
+            if (document.createEvent) ev.initEvent (eventType, false, false);
+         }
+         if (element.dispatchEvent) return element.dispatchEvent (ev);
+         if (element.fireEvent)     return element.fireEvent     (eventType, ev);
+         return clog ('c.fire error', 'Unfortunately, this browser supports neither EventTarget.dispatchEvent nor element.fireEvent.');
+      });
+   }
+
    // *** NON-DOM FUNCTIONS ***
 
    c.ready = function (fun) {
@@ -231,7 +248,7 @@ Please refer to readme.md to read the annotated source.
 
       var r = window.XMLHttpRequest ? new XMLHttpRequest () : new ActiveXObject ('Microsoft.XMLHTTP');
       r.open (method.toUpperCase (), path, true);
-      if (teishi.complex (body) && teishi.t (body, true) !== 'formdata') {
+      if (teishi.complex (body) && type (body, true) !== 'formdata') {
          headers ['content-type'] = headers ['content-type'] || 'application/json';
          body = teishi.s (body);
       }
