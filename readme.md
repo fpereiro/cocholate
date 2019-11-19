@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v2.1.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v2.1.1, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -435,7 +435,7 @@ Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v2.1.0
+cocholate - v2.1.1
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -724,7 +724,7 @@ An implementation note: we write this last validation rule as a function and not
                function () {
                   if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return clog ('teishi.v', 'selector.from passed to cocholate must be a DOM element.');
                   return true;
-               },
+               }
 ```
 
 If any of the validations fail, we print an error and return `false`.

@@ -1,5 +1,5 @@
 /*
-cocholate - v2.1.0
+cocholate - v2.1.1
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -93,7 +93,7 @@ Please refer to readme.md to read the annotated source.
                function () {
                   if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return clog ('teishi.v', 'selector.from passed to cocholate must be a DOM element.');
                   return true;
-               },
+               }
             ]]
          ]}
       ])) return false;
