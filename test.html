@@ -6,9 +6,9 @@
    </head>
    <body>
       <script src="https://cdn.jsdelivr.net/gh/douglascrockford/JSON-js@aef828bfcd7d5efaa41270f831f8d27d5eef3845/json2.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@e074268833c7beef89796ba368b0489e0fbe5caf/dale.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@74559ed3301dcdf9acabb3b938d9eeeab8d224db/teishi.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@afe9dad040522bd288233353ed7734e7e367507f/lith.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@7e1be108aa52beef7ad84f8c31649cfa23bc8f53/dale.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@93b977548301d17f8b2fb31a60242ceed810b1f1/teishi.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@8af751806759d262da26174dcf707a33c5b0b296/lith.js"></script>
       <script src="cocholate.js"></script>
       <script>
 
@@ -63,8 +63,10 @@
 
                if (! teishi.eq (counter, {click: 1, change: 1})) return 'c.fire didn\'t work.';
 
-               if (c ('selector', /invalidfun/) !== false) return 'Invalid function was considered valid.';
-               if (c ('body').length !== 1)                return 'Find could not locate body.';
+               if (c ('selector', /invalidfun/)    !== false) return 'Invalid function was considered valid #1.';
+               if (c (document.body, /invalidfun/) !== false) return 'Invalid function was considered valid #2.';
+               if (c ('body').length !== 1)                   return 'Find could not locate body #1.';
+               if (c (document.body) !== document.body)       return 'When passing DOM element, c is not returning it.';
 
                c.fill ('body', lith.g ([
                   ['div', {"class": 'hola'}, 'Content'],
@@ -73,15 +75,16 @@
 
                if (c ('.hola') [0].innerHTML !== 'Content') return 'Class selector didn\'t work.';
                if (c ('#hola').innerHTML     !== 'Content') return 'Id selector didn\'t work.';
-               if (c ('div#hola').innerHTML  !== 'Content') return 'Id selector didn\'t work.';
+               if (c ('div#hola').innerHTML  !== 'Content')     return 'Id selector didn\'t work #1.';
+               if (c (c ('div#hola')).innerHTML  !== 'Content') return 'Id selector didn\'t work #2.';
 
                if (document.querySelectorAll) {
-                  if (type (c ('#hola[name="name"]')) !== 'array') return 'Non id selector starting with # didn\'t work.';
-                  if (type (c ('#hola>div')) !== 'array')          return 'Non id selector starting with # didn\'t work.';
+                  if (type (c ('#hola[name="name"]')) !== 'array') return 'Non id selector starting with # didn\'t work #1.';
+                  if (type (c ('#hola>div'))          !== 'array') return 'Non id selector starting with # didn\'t work #2.';
                }
                else {
-                  if (c ('#hola[name="name"]') !== false) return 'Non id selector starting with # wasn\'t rejected.';
-                  if (c ('#hola[name="name"]') !== false) return 'Non id selector starting with # wasn\'t rejected.';
+                  if (c ('#hola[name="name"]') !== false) return 'Non id selector starting with # wasn\'t rejected #1.';
+                  if (c ('#hola>div')          !== false) return 'Non id selector starting with # wasn\'t rejected #2.';
                }
 
                c.fill ('body', lith.g ([
@@ -100,7 +103,8 @@
                   if (c ({from: c ('#hola'), selector: 'p.a'}).length !== 1) return 'Non-id selector with id first element didn\'t work.';
                }
 
-               if (c.fill ('body', /notastring/) !== false) return 'c.fill accepted invalid HTML.';
+               if (c.fill ('body', /notastring/) !== false)        return 'c.fill accepted invalid HTML #1.';
+               if (c.fill (document.body, /notastring/) !== false) return 'c.fill accepted invalid HTML #2.';
 
                if (c (['invalid', 'div']) !== false) return 'invalid array selector was accepted.';
 
@@ -171,28 +175,35 @@
                if (c (cdiv).length !== 3) 'c.set didn\'t work.';
 
                if (c.get (cdiv, 'class') [0] ['class'] !== 'someclass') return 'c.get didn\'t work #1.';
+               var allattrs = c.get (cdiv) [0];
+               // We delete the `contentEditable` property because IE6-7 will add this property that we haven't set ourselves.
+               delete allattrs.contentEditable;
+               if (! teishi.eq (allattrs, {id: 'beforeinner', 'class': 'someclass'})) return 'c.get didn\'t bring all attributes.';
 
                c.set (cdiv, {width: '200px', opacity: 0.9}, true);
 
-               if (c.get (cdiv, ['height', 'width'], true) [0].height !== null) return 'multiple c.get didn\'t work.';
-               if (c.get (cdiv, ['height', 'width'], true) [0].width  !== '200px') return 'multiple c.get didn\'t work.';
+               if (c.get (cdiv, ['height', 'width'], true) [0].height !== null)    return 'multiple c.get didn\'t work #1.';
+               if (c.get (cdiv, ['height', 'width'], true) [0].width  !== '200px') return 'multiple c.get didn\'t work #2.';
+               var allcssattrs = c.get (cdiv, undefined, true) [0];
+               // All major browsers except for Internet Explorer stringify the opacity, so we do that too.
+               if (! teishi.eq ({width: allcssattrs.width, opacity: allcssattrs.opacity + ''}, {width: '200px', opacity: '0.9'})) return 'c.get didn\'t bring all CSS attributes.';
 
                c.fill ('body', lith.g (dale.go (['red', 'blue', 'green'], function (v, k) {
                   return ['p', {id: 'a' + k, "class": v}];
                })));
 
                if (document.querySelectorAll) {
-                  if (JSON.stringify (c.get ('p',    ['id', 'class'])) !== '[{"id":"a0","class":"red"},{"id":"a1","class":"blue"},{"id":"a2","class":"green"}]') return 'c.get didn\'t work #2.';
+                  if (JSON.stringify (c.get ('p',    ['id', 'class'])) !== '[{"id":"a0","class":"red"},{"id":"a1","class":"blue"},{"id":"a2","class":"green"}]') return 'c.get didn\'t work #3.';
 
-                  if (JSON.stringify (c.get ('#a0', ['id', 'class']))  !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #3.';
-                  if (JSON.stringify (c.get ('p#a0', ['id', 'class'])) !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #4.';
+                  if (JSON.stringify (c.get ('#a0', ['id', 'class']))  !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #4.';
+                  if (JSON.stringify (c.get ('p#a0', ['id', 'class'])) !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #5.';
                }
                else {
                   // IE6-7 use className, FF3 uses class
-                  if (JSON.stringify (c.get ('p', ['id', 'className'])) !== '[{"id":"a0","className":"red"},{"id":"a1","className":"blue"},{"id":"a2","className":"green"}]' && JSON.stringify (c.get ('p', ['id', 'class'])) !== '[{"id":"a0","class":"red"},{"id":"a1","class":"blue"},{"id":"a2","class":"green"}]') return 'c.get didn\'t work #2.';
+                  if (JSON.stringify (c.get ('p', ['id', 'className'])) !== '[{"id":"a0","className":"red"},{"id":"a1","className":"blue"},{"id":"a2","className":"green"}]' && JSON.stringify (c.get ('p', ['id', 'class'])) !== '[{"id":"a0","class":"red"},{"id":"a1","class":"blue"},{"id":"a2","class":"green"}]') return 'c.get didn\'t work #3.';
 
-                  if (JSON.stringify (c.get ('#a0', ['id', 'className']))  !== '{"id":"a0","className":"red"}' && JSON.stringify (c.get ('#a0', ['id', 'class']))  !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #3.';
-                  if (JSON.stringify (c.get ('p#a0', ['id', 'className'])) !== '{"id":"a0","className":"red"}' && JSON.stringify (c.get ('p#a0', ['id', 'class'])) !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #4.';
+                  if (JSON.stringify (c.get ('#a0', ['id', 'className']))  !== '{"id":"a0","className":"red"}' && JSON.stringify (c.get ('#a0', ['id', 'class']))  !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #4.';
+                  if (JSON.stringify (c.get ('p#a0', ['id', 'className'])) !== '{"id":"a0","className":"red"}' && JSON.stringify (c.get ('p#a0', ['id', 'class'])) !== '{"id":"a0","class":"red"}') return 'c.get didn\'t work #5.';
                }
 
                c.fill ('body', lith.g (dale.go (['red', 'blue', 'green'], function (v) {
@@ -200,10 +211,10 @@
                })));
 
                // Interestingly enough, Opera 11.1 and below convert CSS colors to hexadecimal, hence the need for the second comparison.
-               if (JSON.stringify (c.get ('p', 'color', true)) !== '[{"color":"red"},{"color":"blue"},{"color":"green"}]' && JSON.stringify (c.get ('p', 'color', true)) !== '[{"color":"#ff0000"},{"color":"#0000ff"},{"color":"#008000"}]') return 'c.get didn\'t work #5.';
+               if (JSON.stringify (c.get ('p', 'color', true)) !== '[{"color":"red"},{"color":"blue"},{"color":"green"}]' && JSON.stringify (c.get ('p', 'color', true)) !== '[{"color":"#ff0000"},{"color":"#0000ff"},{"color":"#008000"}]') return 'c.get didn\'t work #6.';
                c.fill ('body', lith.g (['p']));
 
-               var bodyp = document.querySelectorAll ? 'body p' : {from: c ('body') [0], selector: 'p'};
+               var bodyp = document.querySelectorAll ? 'body p' : {from: document.body, selector: 'p'};
 
                c.set (bodyp, {"class": 'someclass'});
 
@@ -266,6 +277,7 @@
                var ajax = c.ajax ('get', 'notaroute', null, null, function () {
                   if (error) return;
                   c.loadScript ('cocholate.js', function () {
+                     if (arguments [1] && type (arguments [1].headers) !== 'object') throw new Error ('Empty headers are not processed correctly');
                      // We ignore CORS errors when running the test locally.
                      if (! (arguments [0] && arguments [0].status === 0)) {
                         if (arguments.length !== 2) throw new Error ('Script was not loaded.');

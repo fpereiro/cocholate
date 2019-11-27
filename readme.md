@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v2.1.1, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v2.2.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -28,9 +28,9 @@ cocholate is written in Javascript. You can use it in the browser by sourcing th
 Or you can use these links to the latest version - courtesy of [jsDelivr](https://jsdelivr.com).
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@e074268833c7beef89796ba368b0489e0fbe5caf/dale.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@74559ed3301dcdf9acabb3b938d9eeeab8d224db/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@ba7f885b4bd4d325f131ecd4faafc7de327db11a/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@7e1be108aa52beef7ad84f8c31649cfa23bc8f53/dale.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@93b977548301d17f8b2fb31a60242ceed810b1f1/teishi.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -139,6 +139,14 @@ c ([':not', 'div', 'p']);
 c ([':not', [':or', 'div', 'p']]);
 ```
 
+If you want to perform an operation on a certain DOM element, you can directly pass it to `c`.
+
+```javascript
+// These two calls are equivalent.
+c ('#hello');
+c (document.getElementById ('hello'));
+```
+
 ## `fun`
 
 Besides returning an array of DOM elements, we will want to do some operations on them. To do this, we can pass a second argument to `c`, which is a function that will be executed for every element that matched the selector. The results will be collected on an array that's then returned.
@@ -211,7 +219,7 @@ You will get:
 
 ### `c.get`
 
-`c.get` is useful for fetching attributes from elements. It takes `attributes` as its second argument (which can be either a string or an array of strings, each of them representing an attribute name) and an optional boolean third parameter `css` which marks whether you want to get CSS properties instead of DOM ones.
+`c.get` is useful for fetching attributes from elements. It takes `attributes` as its second argument (which can be `undefined`, a string or an array of strings, each of them representing an attribute name) and an optional boolean third parameter `css` which marks whether you want to get CSS properties instead of DOM ones.
 
 For each of the matching elements, this function will return an object where the key is the attribute name and the corresponding value is the attribute value. All these objects are wrapped in an array (with the sole exception of a selector that targets an id).
 
@@ -266,6 +274,8 @@ Finally, either with normal attributes or CSS ones, if the attribute is not pres
 c.get ('p', 'name');         // will return `[{name: null}]`
 c.get ('p', 'height', true); // will return `[{height: null}]`
 ```
+
+If `attributes` is `undefined`, *all* the attributes will be returned, except those with falsy values (like `null`, `''`, `false`, 0 and `false`). If you want to bring all CSS attributes, you can explicitly pass `undefined` as a second argument; note that this will bring only the inline CSS attributes, and not the computed CSS values for the element.
 
 ### `c.set`
 
@@ -418,8 +428,8 @@ The conveniences provided are:
 - If you pass an array or object as `body`, the `content-type` header will be automatically set to `application/json` and the body will be stringified.
 - All ajax requests done through this function are asynchronous.
 - The function will synchronously return an object of the form `{headers: ..., body: ..., xhr: <the request object>}` (corresponding to the request data).
-- If the response has a code 200, the callback will receive `null` as its first argument and the following object as the second argument: `{headers: {...}, body: ..., xhr: <the request object>}`. If the `Content-Type` response header is `application/json`, the `body` will be parsed - if the `body` turns out to be invalid JSON, its value will be `false`.
-- If the code is not 200, the request object will be received as the first argument. The request object contains all the relevant information, including payloads and errors.
+- If the response has a code 200 or 304, the callback will receive `null` as its first argument and the following object as the second argument: `{headers: {...}, body: ..., xhr: <the request object>}`. If the `Content-Type` response header is `application/json`, the `body` will be parsed - if the `body` turns out to be invalid JSON, its value will be `false`.
+- If the code is not 200 or 304, the request object will be received as the first argument. The request object contains all the relevant information, including payloads and errors.
 
 ### `c.loadScript`
 
@@ -429,13 +439,13 @@ If the script is successfully fetched, `callback` will receive two arguments (`n
 
 ## Source code
 
-The complete source code is contained in `cocholate.js`. It is about 290 lines long.
+The complete source code is contained in `cocholate.js`. It is about 300 lines long.
 
 Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v2.1.1
+cocholate - v2.2.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -544,10 +554,16 @@ We check that `fun` is a function or `undefined`. If it is neither, an error is 
       if (teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'])) return false;
 ```
 
-We define a local variable `elements` that will contain all the DOM elements to which `selector` refers. The search for all matching elements is done by `c.find`, a function which we'll see below.
+We create a local variable that will indicate whether the `selector` is actually a DOM node.
 
 ```javascript
-      var elements = c.find (selector);
+      var selectorIsNode = selector && selector.nodeName;
+```
+
+We define a local variable `elements` that will contain all the DOM elements to which `selector` refers. If the selector is itself a DOM node, we wrap it in an array. Otherwise, the search for all matching elements is done by `c.find`, a function which we'll see below.
+
+```javascript
+      var elements = selectorIsNode ? [selector] : c.find (selector);
 ```
 
 If `c.find` returns `false`, this means that the selector is invalid. In this case, `c.find` will have already printed an error message. We return `false`.
@@ -576,10 +592,10 @@ This means that if `fun` is present, `elements` will contain the results of pass
       }
 ```
 
-If the selector is of the form `#ID` or `TAGNAME#ID`, we return the first (and only) element of `elements`.
+If the selector a DOM node, or if it is of the form `#ID` or `TAGNAME#ID`, we return the first (and only) element of `elements`.
 
 ```javascript
-      if (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/)) return elements [0];
+      if (selectorIsNode || (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/))) return elements [0];
 ```
 
 Otherwise, we return the entire array of `elements`. There's nothing else to do, so we close the function.
@@ -981,10 +997,16 @@ We now define `c.get`, which takes three arguments: `selector`, `attributes` and
    c.get  = function (selector, attributes, css) {
 ```
 
-If `attributes` is neither a string nor an array, we print an error and return `false`.
+If `attributes` is not string, `undefined`, nor an array, we print an error and return `false`.
 
 ```javascript
-      if (teishi.stop ('c.get', ['attributes', attributes, ['string', 'array'], 'oneOf'])) return false;
+      if (teishi.stop ('c.get', ['attributes', attributes, ['string', 'array', 'undefined'], 'oneOf'])) return false;
+```
+
+We define an array `ignoredValues` with attribute values which we will ignore. This is only necessary for iterating style attributes in Internet Explorer 8 and element attributes in Internet Explorer 7 and below.
+
+```javascript
+      var ignoredValues = [null, '', false, 0, "false"];
 ```
 
 We iterate the elements matched by `selector` and apply the following function to each of them. Note that we will return an array containing the output of this function for each of the elements.
@@ -993,10 +1015,10 @@ We iterate the elements matched by `selector` and apply the following function t
       return c (selector, function (element) {
 ```
 
-For each element, we iterate `attributes` - if `attributes` is a string, this will be equivalent to having a single attribute. We will create an object with the attributes and return it.
+If `attributes` is not `undefined`, we iterate it - if `attributes` is a string, this will be equivalent to having a single attribute. We will create an object with the attributes and return it.
 
 ```javascript
-         return dale.obj (attributes, function (v) {
+         if (attributes !== undefined) return dale.obj (attributes, function (v) {
 ```
 
 If the `css` flag is enabled, we'll access `element.style [v]` (which contains the CSS attribute). If the attribute is not present, we will consider it to be `null`.
@@ -1005,11 +1027,48 @@ If the `css` flag is enabled, we'll access `element.style [v]` (which contains t
             if (css) return [v, element.style [v] || null];
 ```
 
-If the `css` flag is disabled, we will instead return the element's attribute (accessed through `getAttribute`). There's nothing else to do, so we close the iterating function, the invocation to `c` and the function itself.
+If the `css` flag is disabled, we will instead return the element's attribute (accessed through `getAttribute`).
 
 ```javascript
             else     return [v, element.getAttribute (v)];
          });
+```
+
+If we're here, `attributes` is `undefined`, which means we want all the element's attributes. If `css` is falsy, we want the actual attributes (as opposed to the style attributes) of the element. We iterate `element.attributes`. Note that we start with a base object with the element's `class` - this is only for the benefit of Internet Explorer 7 and below.
+
+```javascript
+         if (! css) return dale.obj (element.attributes, {'class': element ['class']}, function (v, k) {
+```
+
+If the attribute is truthy, if its `nodeName` is truthy, and its `nodeValue` is not one of the values we are ignoring, we return them both. Checking whether the attribute is truthy is only necessary in Internet Explorer 7 and below; many browsers, however, require us to check whether `nodeName` is truthy, otherwise `undefined` attributes will be returned.
+
+```javascript
+            if (v && v.nodeName && ignoredValues.indexOf (v.nodeValue) === -1) return [v.nodeName, v.nodeValue];
+         });
+```
+
+If we're here, we want all inline CSS attributes for the element. In all supported browsers except for Internet Explorer 8, `element.style` has a length property that we will use to iterate the style object. In Internet Explorer 8 and below, however, we're forced to iterate all the keys of the object.
+
+```javascript
+         return dale.obj (element.style.length ? dale.times (element.style.length, 0) : dale.keys (element.style), function (k) {
+```
+
+If `element.style.length` is supported, we simply return the corresponding key and value of the style object.
+
+```javascript
+            if (element.style.length) return [element.style [k], element.style [element.style [k]]];
+```
+
+For Internet Explorer 8 and below, we return the key and value but only if the value is not one of the `ignoredValues`.
+
+```javascript
+            if (ignoredValues.indexOf (element.style [k]) === -1) return [k, element.style [k]];
+         });
+```
+
+There's nothing else to do, so we close the iterating function, the invocation to `c` and the function itself.
+
+```javascript
       });
    }
 ```
@@ -1392,28 +1451,34 @@ We define a variable `res` that will hold the response object. We set its `xhr` 
             xhr: r,
 ```
 
-We take the response headers (which are a string), split them by newlines and build a `headers` object by iterating them. For each header:
+We take the response headers (which are a string), split them by newlines and build a `headers` object by iterating them. In Firefox 18 and below, the response headers don't contain carriage returns (`\r`), so we make them optional in the regex we pass to `split`. For each header:
 
 ```javascript
-            headers: dale.obj (r.getAllResponseHeaders ().split ('\r\n'), function (header) {
+            headers: dale.obj (r.getAllResponseHeaders ().split (/\r?\n/), function (header) {
 ```
 
-We split the header by a colon and trailing space, to separate the header key from its value.
+If header is an empty string, we ignore it.
 
 ```javascript
-               header = header.split (/:\s+/);
+               if (header === '') return;
+```
+
+We create two variables: `name`, to hold the name of the header; and `value`, to hold the contents of the header after the name, a colon and one or more whitespace. The `name` will be all the text before the first colon.
+
+```javascript
+               var name = header.match (/^[^:]+/) [0], value = header.replace (name, '').replace (/:\s+/, '');
 ```
 
 If the `content-type` header matches the `application/json` MIME type, we set `json` to `true`.
 
 ```javascript
-               if (header [0].match (/^content-type/i) && header [1].match ('application/json')) json = true;
+               if (name.match (/^content-type/i) && value.match (/application\/json/i)) json = true;
 ```
 
-We return the splitted header to place it within `headers`. This concludes the iteration. We also close `headers`.
+We return `name` and `value` to place them within `headers`. This concludes the iteration. We also close `headers`.
 
 ```javascript
-               return header;
+               return [name, value];
             })
          };
 ```

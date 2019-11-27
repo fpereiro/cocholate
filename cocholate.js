@@ -1,5 +1,5 @@
 /*
-cocholate - v2.1.1
+cocholate - v2.2.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -37,7 +37,9 @@ Please refer to readme.md to read the annotated source.
    var c = window.c = function (selector, fun) {
       if (teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'])) return false;
 
-      var elements = c.find (selector);
+      var selectorIsNode = selector && selector.nodeName;
+
+      var elements = selectorIsNode ? [selector] : c.find (selector);
       if (elements === false) return false;
 
       if (fun) {
@@ -47,8 +49,8 @@ Please refer to readme.md to read the annotated source.
          });
       }
 
-      if (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/)) return elements [0];
-      else                                                                            return elements;
+      if (selectorIsNode || (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/))) return elements [0];
+      else                                                                                                return elements;
    }
 
    c.nodeListToArray = function (nodeList) {
@@ -159,12 +161,20 @@ Please refer to readme.md to read the annotated source.
    }
 
    c.get  = function (selector, attributes, css) {
-      if (teishi.stop ('c.get', ['attributes', attributes, ['string', 'array'], 'oneOf'])) return false;
+      if (teishi.stop ('c.get', ['attributes', attributes, ['string', 'array', 'undefined'], 'oneOf'])) return false;
+      var ignoredValues = [null, '', false, 0, "false"];
 
       return c (selector, function (element) {
-         return dale.obj (attributes, function (v) {
+         if (attributes !== undefined) return dale.obj (attributes, function (v) {
             if (css) return [v, element.style [v] || null];
             else     return [v, element.getAttribute (v)];
+         });
+         if (! css) return dale.obj (element.attributes, {'class': element ['class']}, function (v, k) {
+            if (v && v.nodeName && ignoredValues.indexOf (v.nodeValue) === -1) return [v.nodeName, v.nodeValue];
+         });
+         return dale.obj (element.style.length ? dale.times (element.style.length, 0) : dale.keys (element.style), function (k) {
+            if (element.style.length) return [element.style [k], element.style [element.style [k]]];
+            if (ignoredValues.indexOf (element.style [k]) === -1) return [k, element.style [k]];
          });
       });
    }
@@ -261,10 +271,11 @@ Please refer to readme.md to read the annotated source.
          var json;
          var res = {
             xhr: r,
-            headers: dale.obj (r.getAllResponseHeaders ().split ('\r\n'), function (header) {
-               header = header.split (/:\s+/);
-               if (header [0].match (/^content-type/i) && header [1].match ('application/json')) json = true;
-               return header;
+            headers: dale.obj (r.getAllResponseHeaders ().split (/\r?\n/), function (header) {
+               if (header === '') return;
+               var name = header.match (/^[^:]+/) [0], value = header.replace (name, '').replace (/:\s+/, '');
+               if (name.match (/^content-type/i) && value.match (/application\/json/i)) json = true;
+               return [name, value];
             })
          };
          res.body = json ? teishi.p (r.responseText) : r.responseText;
