@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v2.2.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v2.2.1, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -30,7 +30,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@7e1be108aa52beef7ad84f8c31649cfa23bc8f53/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@93b977548301d17f8b2fb31a60242ceed810b1f1/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@aaeb5f1270ca1338381ffe892480404295044281/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -445,7 +445,7 @@ Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v2.2.0
+cocholate - v2.2.1
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -1408,7 +1408,7 @@ If `body` is not a [FormData](https://developer.mozilla.org/en-US/docs/Web/API/f
 2) We set `body` to its stringified value.
 
 ```javascript
-         body = teishi.s (body);
+         body = teishi.str (body);
       }
 ```
 
@@ -1486,7 +1486,7 @@ We return `name` and `value` to place them within `headers`. This concludes the 
 We set `res.body` to the `responseText` property of the request; if the response was JSON, we parse the `responseText`.
 
 ```javascript
-         res.body = json ? teishi.p (r.responseText) : r.responseText;
+         res.body = json ? teishi.parse (r.responseText) : r.responseText;
 ```
 
 We invoke `callback` with a `null` first argument and `res` as its second. This concludes the handler.

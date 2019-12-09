@@ -1,5 +1,5 @@
 /*
-cocholate - v2.2.0
+cocholate - v2.2.1
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -260,7 +260,7 @@ Please refer to readme.md to read the annotated source.
       r.open (method.toUpperCase (), path, true);
       if (teishi.complex (body) && type (body, true) !== 'formdata') {
          headers ['content-type'] = headers ['content-type'] || 'application/json';
-         body = teishi.s (body);
+         body = teishi.str (body);
       }
       dale.go (headers, function (v, k) {
          r.setRequestHeader (k, v);
@@ -278,7 +278,7 @@ Please refer to readme.md to read the annotated source.
                return [name, value];
             })
          };
-         res.body = json ? teishi.p (r.responseText) : r.responseText;
+         res.body = json ? teishi.parse (r.responseText) : r.responseText;
          callback (null, res);
       }
       r.send (body);

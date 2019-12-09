@@ -273,6 +273,10 @@
 
                if (c.ajax (/invalidmethod/, /invalidpath/) !== false) return 'c.ajax didn\'t validate its input.';
 
+               var jsonajax = c.ajax ('post', 'notaroute', {}, {a: 'b'}, function () {});
+
+               if (type (jsonajax) !== 'object' || ! teishi.eq ({headers: jsonajax.headers, body: jsonajax.body}, {headers: {'content-type': 'application/json'}, body: '{"a":"b"}'})) return 'Error when sending a JSON request through c.ajax.';
+
                var error;
                var ajax = c.ajax ('get', 'notaroute', null, null, function () {
                   if (error) return;
