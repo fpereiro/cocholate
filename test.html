@@ -65,7 +65,7 @@
 
                if (c ('selector', /invalidfun/)    !== false) return 'Invalid function was considered valid #1.';
                if (c (document.body, /invalidfun/) !== false) return 'Invalid function was considered valid #2.';
-               if (c ('body').length !== 1)                   return 'Find could not locate body #1.';
+               if (c ('body') !== document.body)              return 'Find could not locate body #1.';
                if (c (document.body) !== document.body)       return 'When passing DOM element, c is not returning it.';
 
                c.fill ('body', lith.g ([
@@ -94,7 +94,7 @@
                   ]]
                ]));
 
-               if (c ('body').length !== 1) return 'c.empty didn\'t work.';
+               if (c ('div').length !== 1)  return 'c.empty didn\'t work.';
                if (c ('p').length !== 2)    return 'c.fill didn\'t work.';
                if (document.querySelectorAll) {
                   if (c ('#hola p.a').length !== 1) return 'Non-id selector with id first element didn\'t work.';
@@ -136,7 +136,7 @@
                   if (c ([':and', 'body *', [':or', 'div', 'p']]).length !== 3) return 'nested selector didn\'t work #8.';
                }
                else {
-                  if (c ([':and', {from: c ('body') [0], selector: '*'}, [':or', 'div', 'p']]).length !== 3) return 'nested selector didn\'t work #8.';
+                  if (c ([':and', {from: c ('body'), selector: '*'}, [':or', 'div', 'p']]).length !== 3) return 'nested selector didn\'t work #8.';
                }
 
                c.fill ('body', lith.g ([
@@ -149,7 +149,7 @@
                ]));
 
                if (c ({selector: 'div.inner'}) !== false) return 'undefined from selector accepted.';
-               if (c ({selector: 'div.inner', from: c ('body')}) !== false) return 'array from selector accepted.';
+               if (c ({selector: 'div.inner', from: [c ('body')]}) !== false) return 'array from selector accepted.';
                if (c ({selector: 'div.inner', from: c ('#container')}).length !== 2) return 'from selector didn\'t work.';
 
                c.fill ('body', lith.g (['div', {id: 'container', style: 'border: solid 1px lime'}, [['div', {id: 'inner', style: 'border: solid 1px blue'}, 'inner'], 'container']]));
@@ -228,6 +228,14 @@
 
                c.set (bodyp, {color: null}, true);
                if (JSON.stringify (c.get (bodyp, 'color', true)) !== '[{"color":null}]') return 'c.set didn\'t work #4.';
+
+               c.fill ('body', lith.g ([
+                  ['input', {'class': 'noclass'}]
+               ]));
+
+               var result = c.get ('input') [0];
+
+               if (result ['class'] !== 'noclass') return 'c.get didn\'t return class properly.';
 
                c.fill ('body', lith.g ([
                   ['input', {id: 'wha', value: 1}],

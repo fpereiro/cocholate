@@ -1,5 +1,5 @@
 /*
-cocholate - v2.2.1
+cocholate - v2.3.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -49,7 +49,7 @@ Please refer to readme.md to read the annotated source.
          });
       }
 
-      if (selectorIsNode || (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/))) return elements [0];
+      if (selectorIsNode || selector === 'body' || (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/))) return elements [0];
       else                                                                                                return elements;
    }
 
@@ -169,7 +169,7 @@ Please refer to readme.md to read the annotated source.
             if (css) return [v, element.style [v] || null];
             else     return [v, element.getAttribute (v)];
          });
-         if (! css) return dale.obj (element.attributes, {'class': element ['class']}, function (v, k) {
+         if (! css) return dale.obj (element.attributes, {'class': element ['class'] || element.className}, function (v, k) {
             if (v && v.nodeName && ignoredValues.indexOf (v.nodeValue) === -1) return [v.nodeName, v.nodeValue];
          });
          return dale.obj (element.style.length ? dale.times (element.style.length, 0) : dale.keys (element.style), function (k) {

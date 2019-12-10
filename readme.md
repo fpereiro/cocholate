@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v2.2.1, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v2.3.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -30,7 +30,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@7e1be108aa52beef7ad84f8c31649cfa23bc8f53/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@93b977548301d17f8b2fb31a60242ceed810b1f1/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@c1b57dba26976cc6afdeb0a1fac8f5955a10c2d9/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -96,13 +96,19 @@ c ('body #hola');
 c ('#hola p');
 ```
 
+If you invoke `c` with the string `'body'` as the selector, you will receive only the `body` itself as the result, instead of an array containing the `body`.
+
+```javascript
+c ('body') === document.body // this line will be true
+```
+
 Note: in old browsers that do not support `querySelectorAll` (Firefox 3 and below, Internet Explorer 7 and below), cocholate provides a limited variety of selectors, with the following shapes: `TAG`, `#ID`, `.CLASS`, `TAG#ID` and `TAG.CLASS`. In these old browsers, if you use a selector that does not conform to these specific forms, cocholate will print an error and return `false`.
 
 If instead of searching from all elements you want to search within a specific element, instead of a string selector you can use an object with the form `{selector: SELECTOR, from: FROM}`, where `SELECTOR` is the string selector and `FROM` is an DOM element. For example:
 
 ```javascript
 // This will return all divs with class `hello` from the body
-c ({selector: 'div', from: c ('body') [0]});
+c ({selector: 'div', from: c ('body')});
 
 // This will return all paragraphs with class `hello` from a div with id `hello`
 c ({selector: 'div', from: document.getElementById ('hello')});
@@ -146,6 +152,8 @@ If you want to perform an operation on a certain DOM element, you can directly p
 c ('#hello');
 c (document.getElementById ('hello'));
 ```
+
+Note that in this case `c` will return a single result, instead of an array of results, because the DOM element is only one.
 
 ## `fun`
 
@@ -445,7 +453,7 @@ Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v2.2.1
+cocholate - v2.3.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -1034,10 +1042,10 @@ If the `css` flag is disabled, we will instead return the element's attribute (a
          });
 ```
 
-If we're here, `attributes` is `undefined`, which means we want all the element's attributes. If `css` is falsy, we want the actual attributes (as opposed to the style attributes) of the element. We iterate `element.attributes`. Note that we start with a base object with the element's `class` - this is only for the benefit of Internet Explorer 7 and below.
+If we're here, `attributes` is `undefined`, which means we want all the element's attributes. If `css` is falsy, we want the actual attributes (as opposed to the style attributes) of the element. We iterate `element.attributes`. Note that we start with a base object with the element's `class` or the element `className` (if `class` is absent) - this is only for the benefit of Internet Explorer 7 and below.
 
 ```javascript
-         if (! css) return dale.obj (element.attributes, {'class': element ['class']}, function (v, k) {
+         if (! css) return dale.obj (element.attributes, {'class': element ['class'] || element.className}, function (v, k) {
 ```
 
 If the attribute is truthy, if its `nodeName` is truthy, and its `nodeValue` is not one of the values we are ignoring, we return them both. Checking whether the attribute is truthy is only necessary in Internet Explorer 7 and below; many browsers, however, require us to check whether `nodeName` is truthy, otherwise `undefined` attributes will be returned.
