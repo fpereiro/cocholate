@@ -30,7 +30,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@7e1be108aa52beef7ad84f8c31649cfa23bc8f53/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@93b977548301d17f8b2fb31a60242ceed810b1f1/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@c8e95d318083fee44d5acf1c49367a57fd48b567/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -600,10 +600,10 @@ This means that if `fun` is present, `elements` will contain the results of pass
       }
 ```
 
-If the selector a DOM node, or if it is of the form `#ID` or `TAGNAME#ID`, we return the first (and only) element of `elements`.
+If the selector a DOM node, or if it is the string `'body'`, or if it is of the form `#ID` or `TAGNAME#ID`, we return the first (and only) element of `elements`.
 
 ```javascript
-      if (selectorIsNode || (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/))) return elements [0];
+      if (selectorIsNode || selector === 'body' || (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/))) return elements [0];
 ```
 
 Otherwise, we return the entire array of `elements`. There's nothing else to do, so we close the function.
