@@ -1,5 +1,5 @@
 /*
-cocholate - v2.3.0
+cocholate - v3.0.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -50,7 +50,7 @@ Please refer to readme.md to read the annotated source.
       }
 
       if (selectorIsNode || selector === 'body' || (type (selector) === 'string' && selector.match (/^[a-z0-9]*#[^\s\[>,:]+$/))) return elements [0];
-      else                                                                                                return elements;
+      return elements;
    }
 
    c.nodeListToArray = function (nodeList) {
@@ -134,16 +134,13 @@ Please refer to readme.md to read the annotated source.
 
    c.empty = function (selector) {
       c (selector, function (element) {
-         dale.go (c.nodeListToArray (element.getElementsByTagName ('*')), function (v) {
-            if (v.parentNode) v.parentNode.removeChild (v);
-         });
+         element.innerHTML = '';
       });
    }
 
    c.fill = function (selector, html) {
       if (teishi.stop ('c.fill', ['html', html, 'string'])) return false;
 
-      c.empty (selector);
       c (selector, function (element) {
          element.innerHTML = html;
       });
@@ -213,7 +210,7 @@ Please refer to readme.md to read the annotated source.
             if (document.createEvent) ev.initEvent (eventType, false, false);
          }
          if (element.dispatchEvent) return element.dispatchEvent (ev);
-         if (element.fireEvent)     return element.fireEvent     (eventType, ev);
+         if (element.fireEvent)     return element.fireEvent     ('on' + eventType, ev);
          return clog ('c.fire error', 'Unfortunately, this browser supports neither EventTarget.dispatchEvent nor element.fireEvent.');
       });
    }
@@ -286,7 +283,8 @@ Please refer to readme.md to read the annotated source.
    }
 
    c.loadScript = function (src, callback) {
-      c.ajax ('get', src, {}, '', function (error, data) {
+      callback = callback || function () {};
+      return c.ajax ('get', src, {}, '', function (error, data) {
          if (error) return callback (error);
          var script = document.createElement ('script');
          try {
@@ -298,6 +296,44 @@ Please refer to readme.md to read the annotated source.
          document.body.appendChild (script);
          callback (null, data);
       });
+   }
+
+   c.test = function (tests) {
+
+      if (teishi.stop ('c.test', [
+         ['tests', tests, 'array'],
+         ['tests', tests, 'array', 'each'],
+         dale.go (tests, function (test, k) {return [
+            ['test length', test.length, {min: 2, max: 3}, teishi.test.range],
+            ['test #' + (k + 1) + ' tag', test [0], 'string'],
+            test.length === 2 ? ['test #' + (k + 1) + ' check', test [1], 'function'] : [
+               ['test #' + (k + 1) + ' action', test [1], 'function'],
+               ['test #' + (k + 1) + ' check',  test [2], 'function']
+            ]
+         ]})
+      ])) return false;
+
+      var start = teishi.time (), runNext = function (k) {
+         var test = tests [k];
+
+         if (! test) return clog ('c.test', 'All tests finished successfully (' + (teishi.time () - start) + ' ms)');
+
+         var check = function () {
+            var result = test [test.length === 2 ? 1 : 2] ();
+            if (result === false) throw new Error ('c.test: Test failed: ' + test [0]);
+            runNext (k + 1);
+         }
+
+         clog ('c.test', 'Running test:', test [0]);
+         if (test.length === 2) return check ();
+         if (test [1] (function (wait) {
+            if (wait === undefined) return check ();
+            if (type (wait) !== 'integer' || wait < 0) throw new Error ('c.test: wait parameter must zero or a positive integer but instead is ' + wait);
+            setTimeout (check, wait);
+         }) !== undefined) check ();
+      }
+
+      runNext (0);
    }
 
 }) ();

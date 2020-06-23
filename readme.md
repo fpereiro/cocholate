@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v2.3.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v3.0.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -28,9 +28,9 @@ cocholate is written in Javascript. You can use it in the browser by sourcing th
 Or you can use these links to the latest version - courtesy of [jsDelivr](https://jsdelivr.com).
 
 ```html
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@7e1be108aa52beef7ad84f8c31649cfa23bc8f53/dale.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@93b977548301d17f8b2fb31a60242ceed810b1f1/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@c8e95d318083fee44d5acf1c49367a57fd48b567/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@3199cebc19ec639abf242fd8788481b65c7dc3a3/dale.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@f93f247a01a08e31658fa41f3250f8bbfb3d9080/teishi.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -179,7 +179,7 @@ All the functions presented in this section take a `selector` as its first eleme
 
 ### `c.fill`
 
-`c.fill` takes `html` (an HTML string) as its second argument, and first empties the element and then fills it with the provided HTML string. This function has no meaningful return value. If an invalid selector was passed to this function, an error will be printed.
+`c.fill` takes `html` (an HTML string) as its second argument and then fills it with the provided HTML string. This function has no meaningful return value. If an invalid selector was passed to this function, an error will be printed.
 
 ### `c.place`
 
@@ -396,11 +396,9 @@ c.fire ('#button', 'click');
 
 `c.fire` is useful for test scripts that simulate user interactions.
 
-Note: if you're using this function in Internet Explorer 8 and below, you need to prefix `eventType` with `'on'`: for example, `'click'` should be `'onclick'`.
-
 ## Non-DOM functions
 
-Besides the six DOM functions, there are four more for a few things that are convenient to have around.
+Besides the six DOM functions, there are five more for a few things that are convenient to have around.
 
 ### `c.ready`
 
@@ -416,7 +414,7 @@ Quick & dirty cookie parsing. Takes an optional argument, `cookie`, a cookie str
 
 This function returns an object with keys/values, each of them pertaining to a property of the cookie.
 
-If you pass `false` as the argument, `c.cookie` will delete all the cookies.
+If you pass `false` as the argument, `c.cookie` will delete all the cookies that are accessible to javascript - that is, those that don't have the [HttpOnly](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Set-Cookie) directive/attribute.
 
 ### `c.ajax`
 
@@ -441,19 +439,36 @@ The conveniences provided are:
 
 ### `c.loadScript`
 
-This function requests a script and places it on the DOM, at the bottom of the body. It takes two arguments: `src`, the path to the javascript file; and a `callback` that is executed after the script is fetched.
+This function requests a script and places it on the DOM, at the bottom of the body. It takes two arguments: `src`, the path to the javascript file; and an optional `callback` that is executed after the script is fetched. If `callback` is not passed, it will default to an empty function.
 
-If the script is successfully fetched, `callback` will receive two arguments (`null` and the request object); in case of error, it will receive the request object as its first argument. `c.loadScript` uses `c.ajax` to retrieve the script asynchronously.
+ `c.loadScript` uses `c.ajax` to retrieve the script asynchronously and will return the result of its invocation to `c.ajax` - which will be `false` if `src` is invalid, and a request object otherwise.
+
+If the script is successfully fetched, `callback` will receive two arguments (`null` and the request object); in case of error, it will receive the request object as its first argument.
+
+### `c.test`
+
+This function allows to define and execute tests. It's meant as an ultra lightweight yet effective test runner. This function takes one argument only, `tests`, which is an array. Each of the elements contained by `tests` should also be an array. The two possible forms for each `test` array is:
+
+- `[TAG, ACTION, CHECK]`
+- `[TAG, CHECK]`
+
+`TAG` is a string which prints the name of the test being performed. `CHECK` is a synchronous function that performs a check; if the check fails, the function should return `false` - this will make `c.test` throw an error. Any other value returned by `CHECK` will signify a successful check and the sequence of tests will continue executing.
+
+`ACTION` is a potentially asynchronous function that performs an action. It will be executed before `CHECK`. If this function returns a value other than `undefined`, it will be considered synchronous and `CHECK` will be executed immediately afterwards. If you however wish to perform an async operation, you can do so and not return any value. When the async operation is done, use the `next` function passed as the first argument to `ACTION`, which is the callback. If you wish to wait `n` milliseconds before `CHECK` gets called, pass a positive integer to `next` - this is equivalent as writing `setTimeout (next, <milliseconds>)`.
+
+`c.test` will execute all tests in sequence and stop at the first error. It will print the `TAG` for each test about to be executed. If the test suite has executed successfully, `c.test` will print a message.
+
+If `c.test` receives an invalid `tests` array, it will print an error and return `false`. Otherwise, the function will return `undefined`. Note that, whether the test suite fails or succeeds, `c.test` will return `undefined` - `false` only denotes invalid tests.
 
 ## Source code
 
-The complete source code is contained in `cocholate.js`. It is about 300 lines long.
+The complete source code is contained in `cocholate.js`. It is about 340 lines long.
 
 Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v2.3.0
+cocholate - v3.0.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -609,7 +624,7 @@ If the selector a DOM node, or if it is the string `'body'`, or if it is of the 
 Otherwise, we return the entire array of `elements`. There's nothing else to do, so we close the function.
 
 ```javascript
-      else                                                                         return elements;
+      return elements;
    }
 ```
 
@@ -918,16 +933,10 @@ We call `c` with `selector` and a function as arguments. This function will be e
       c (selector, function (element) {
 ```
 
-For each of the selected elements, we get all its children (and the children of its children) through `getElementsByTagName`.
+We merely set the element's `innerHTML` to an empty string.
 
 ```javascript
-         dale.go (c.nodeListToArray (element.getElementsByTagName ('*')), function (v) {
-```
-
-We take each of the child elements and remove it from its parent. If the element has no parent, it means it's already detached and should already be considered as deleted.
-
-```javascript
-            if (v.parentNode) v.parentNode.removeChild (v);
+         element.innerHTML = '';
 ```
 
 There's nothing else to do, so we close the iteration function, the invocation to `c` and the function. Note that we don't return any values.
@@ -948,12 +957,6 @@ If `html` is not a string, the function will print an error message and return `
 
 ```javascript
       if (teishi.stop ('c.fill', ['html', html, 'string'])) return false;
-```
-
-We invoke `c.empty` to clear out all existing elements from within the elements matched by `selector`.
-
-```javascript
-      c.empty (selector);
 ```
 
 We iterate the elements matched by `selector` (through a call to `c`) and set their `innerHTML` property to `html`.
@@ -1217,10 +1220,10 @@ If the browser supports the [`dispatchEvent` method](https://developer.mozilla.o
          if (element.dispatchEvent) return element.dispatchEvent (ev);
 ```
 
-For Internet Explorer 8 and below, we instead invoke `fireEvent`. Note that we pass both `eventType` and the event itself.
+For Internet Explorer 8 and below, we instead invoke `fireEvent`. Note that we pass both `eventType` and the event itself. Also notice we prepend `'on'` to the `eventType`, so that (for example), `click` becomes `onclick`.
 
 ```javascript
-         if (element.fireEvent)     return element.fireEvent     (eventType, ev);
+         if (element.fireEvent)     return element.fireEvent     ('on' + eventType, ev);
 ```
 
 If the browser supports neither method, we print an error.
@@ -1523,10 +1526,16 @@ We define `c.loadScript`, a function that loads an external script. It takes two
    c.loadScript = function (src, callback) {
 ```
 
-We perform a `GET` request through `c.ajax`, passing `src` as the path.
+If `callback` is falsy, we set it to an empty function.
 
 ```javascript
-      c.ajax ('get', src, {}, '', function (error, data) {
+      callback = callback || function () {};
+```
+
+We perform a `GET` request through `c.ajax`, passing `src` as the path. Note we return the result of the invocation to `c.ajax`, so that the request object is available outside of the function invocation.
+
+```javascript
+      return c.ajax ('get', src, {}, '', function (error, data) {
 ```
 
 If there was an error, we pass it to `callback`.
@@ -1563,6 +1572,147 @@ We invoke `callback` with `null` and `data` as its arguments, to indicate succes
 ```javascript
          callback (null, data);
       });
+   }
+```
+
+We define `c.test`, a function to execute a test suite on the browser. This function takes a single argument, `tests`.
+
+```javascript
+   c.test = function (tests) {
+```
+
+`tests` must be an array and each of its elements must also be an array.
+
+```javascript
+      if (teishi.stop ('c.test', [
+         ['tests', tests, 'array'],
+         ['tests', tests, 'array', 'each'],
+```
+
+We iterate each of the `tests`.
+
+```javascript
+         dale.go (tests, function (test, k) {return [
+```
+
+Each `test` must have a length of either two or three.
+
+```javascript
+            ['test length', test.length, {min: 2, max: 3}, teishi.test.range],
+```
+
+The first element of each `test` must be a string, which is the `tag`.
+
+```javascript
+            ['test #' + (k + 1) + ' tag', test [0], 'string'],
+```
+
+If the test has length 2, we expect its second element to be a function (the `check` function). If it has length 3, we expect its second element (the `action` function) and its third element (the `check` function) to be functions.
+
+```javascript
+            test.length === 2 ? ['test #' + (k + 1) + ' check', test [1], 'function'] : [
+               ['test #' + (k + 1) + ' action', test [1], 'function'],
+               ['test #' + (k + 1) + ' check',  test [2], 'function']
+            ]
+         ]})
+```
+
+If any of these checks fails, an error will be printed and `c.test` will return `false`.
+
+```javascript
+      ])) return false;
+```
+
+We define two variables: `start`, to mark the beginning time of the test suite; and `runNext`, a function that will run one `test` at a time. `runNext` takes an index `k` as its sole argument. We now proceed to define this function.
+
+```javascript
+      var start = teishi.time (), runNext = function (k) {
+```
+
+We define a local variable `test` and set it to the kth element of `tests`. This will be the test to be executed now.
+
+```javascript
+         var test = tests [k];
+```
+
+If there're no tests left, we print a success message which contains the total execution time for the entire test suite.
+
+```javascript
+         if (! test) return clog ('c.test', 'All tests finished successfully (' + (teishi.time () - start) + ' ms)');
+```
+
+We define a function `check`, which will be a wrapper around the `check` function specified in the last argument of the current `test`.
+
+```javascript
+         var check = function () {
+```
+
+We execute the `check` function (which will be the second or third element, depending on how many elements are contained by `test`) and store its result in a variable `result`. If `result` is `false`, this means the check has failed. We will throw an error, taking care of printing the `tag` of the test that failed.
+
+```javascript
+            var result = test [test.length === 2 ? 1 : 2] ();
+            if (result === false) throw new Error ('c.test: Test failed: ' + test [0]);
+```
+
+Otherwise, we'll invoke `runNext` on the next index. We close `check`.
+
+```javascript
+            runNext (k + 1);
+         }
+```
+
+We now print a message containing the `tag` for the current test.
+
+```javascript
+         clog ('c.test', 'Running test:', test [0]);
+```
+
+If there's no `action` function, we execute `check` directly and exit `runNext`.
+
+```javascript
+         if (test.length === 2) return check ();
+```
+
+If there's an `action` function, we invoke it passing to it another function as its first argument. This function is the `next` function, which will be optionally invoked by `action` to continue the chain of tests in case it performs an asynchronous operation.
+
+```javascript
+         if (test [1] (function (wait) {
+```
+
+If the first argument passed to `next` is `undefined`, `next` will invoke `check` and return.
+
+```javascript
+            if (wait === undefined) return check ();
+```
+
+If the first argument passed to `next` is not `undefined`, it must be a `wait` parameter, which will invoke `check` after a timeout. We validate that `wait` is an integer equal or larger than 0 and throw an error otherwise.
+
+```javascript
+            if (type (wait) !== 'integer' || wait < 0) throw new Error ('c.test: wait parameter must zero or a positive integer but instead is ' + wait);
+```
+
+We execute a timeout to execute `check` after `wait` milliseconds.
+
+```javascript
+            setTimeout (check, wait);
+```
+
+We close the invocation to `action`. If `action` returns anything except `undefined`, we invoke `check`. Otherwise, we'll let `action` invoke `check` on its own.
+
+```javascript
+         }) !== undefined) check ();
+```
+
+We close `runNext`.
+
+```javascript
+      }
+```
+
+We invoke `runNext` passing an index of `0` (to start at the first test) and close the function.
+
+```javascript
+      runNext (0);
    }
 ```
 

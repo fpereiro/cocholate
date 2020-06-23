@@ -6,9 +6,9 @@
    </head>
    <body>
       <script src="https://cdn.jsdelivr.net/gh/douglascrockford/JSON-js@aef828bfcd7d5efaa41270f831f8d27d5eef3845/json2.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@7e1be108aa52beef7ad84f8c31649cfa23bc8f53/dale.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@93b977548301d17f8b2fb31a60242ceed810b1f1/teishi.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@8af751806759d262da26174dcf707a33c5b0b296/lith.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@3199cebc19ec639abf242fd8788481b65c7dc3a3/dale.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@f93f247a01a08e31658fa41f3250f8bbfb3d9080/teishi.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@a815e5e44b798793f74a29e05a10a6f12c490274/lith.js"></script>
       <script src="cocholate.js"></script>
       <script>
 
@@ -22,6 +22,17 @@
             var teishi = window.teishi;
             var lith   = window.lith;
             var c      = window.c;
+
+            // We override dale.clog to avoid seeing a ton of alerts on old browsers.
+            try {
+               dale.clog = console.log.bind (console);
+            }
+            catch (error) {
+               dale.clog = function () {
+                  var output = dale.go (arguments, function (v) {return v === undefined ? 'undefined' : v}).join (' ');
+                  if (window.console) window.console.log (output);
+               }
+            }
 
             var type = teishi.type, clog = teishi.clog;
 
@@ -50,16 +61,8 @@
                if (c.fire ('#button', 1337)         !== false) return 'c.fire didn\'t validate its input #2.';
                if (c.fire ('#button')               !== false) return 'c.fire didn\'t validate its input #3.';
 
-               try {
-                  // This will work on any browser except for IE8 and below.
-                  c.fire ('#button', 'click');
-                  c.fire ('#text',   'change');
-               }
-               // Interesting fact: in IE8 and below, if we name the catch argument as `error`, this will conflict with the local variable `error` below!
-               catch (e) {
-                  c.fire ('#button', 'onclick');
-                  c.fire ('#text',   'onchange');
-               }
+               c.fire ('#button', 'click');
+               c.fire ('#text',   'change');
 
                if (! teishi.eq (counter, {click: 1, change: 1})) return 'c.fire didn\'t work.';
 
@@ -96,6 +99,7 @@
 
                if (c ('div').length !== 1)  return 'c.empty didn\'t work.';
                if (c ('p').length !== 2)    return 'c.fill didn\'t work.';
+
                if (document.querySelectorAll) {
                   if (c ('#hola p.a').length !== 1) return 'Non-id selector with id first element didn\'t work.';
                }
@@ -138,6 +142,10 @@
                else {
                   if (c ([':and', {from: c ('body'), selector: '*'}, [':or', 'div', 'p']]).length !== 3) return 'nested selector didn\'t work #8.';
                }
+
+               c.fill ('body', lith.g ('a'));
+               c.empty ('body');
+               if (document.body.innerHTML !== '') return 'c.empty didn\'t work.';
 
                c.fill ('body', lith.g ([
                   ['div', {"class": 'inner'}],
@@ -279,35 +287,98 @@
 
                if (c.cookie ('username=John Doe; expires=Thu, 18 Dec 2013 12:00:00 UTC').username !== 'John Doe') return 'c.cookie didn\'t work.';
 
-               if (c.ajax (/invalidmethod/, /invalidpath/) !== false) return 'c.ajax didn\'t validate its input.';
+               if (dale.stopNot ([
+                  undefined,
+                  {},
+                  'a',
+                  /a/,
+                  ['a', function () {}, function () {}],
+                  [[]],
+                  [['a', function () {}, function () {}], []],
+                  [['a', function () {}, function () {}, function () {}]],
+               ], false, c.test) !== false) return 'c.test didn\'t refuse invalid `tests` array.';
 
-               var jsonajax = c.ajax ('post', 'notaroute', {}, {a: 'b'}, function () {});
-
-               if (type (jsonajax) !== 'object' || ! teishi.eq ({headers: jsonajax.headers, body: jsonajax.body}, {headers: {'content-type': 'application/json'}, body: '{"a":"b"}'})) return 'Error when sending a JSON request through c.ajax.';
-
-               var error;
-               var ajax = c.ajax ('get', 'notaroute', null, null, function () {
-                  if (error) return;
-                  c.loadScript ('cocholate.js', function () {
-                     if (arguments [1] && type (arguments [1].headers) !== 'object') throw new Error ('Empty headers are not processed correctly');
-                     // We ignore CORS errors when running the test locally.
-                     if (! (arguments [0] && arguments [0].status === 0)) {
-                        if (arguments.length !== 2) throw new Error ('Script was not loaded.');
-                     }
-
-                     c.loadScript ('nosuchscript.js', function () {
-                        if (arguments.length !== 1) throw new Error ('Invalid script was loaded.');
-                        if (! error) clog ('Success', 'All tests were successful!');
-                        if (! error) c.fill ('body', lith.g ('All tests were successful!'));
-                     });
-                  });
-               });
-
-               if (type (ajax) !== 'object' || type (ajax.headers) !== 'object' || type (ajax.body) !== 'string' || type (ajax.xhr) !== 'object') {
-                  error = true;
-                  return 'c.ajax didn\'t return a valid object.';
+               var errorThrown;
+               try {
+                  c.test ([['a', function (wait) {wait (-1)}, function () {}]]);
                }
+               catch (err) {
+                  errorThrown = true;
+               }
+               if (! errorThrown) return 'c.test didn\'t validate `wait` parameter passed to `next` function #1.';
 
+               errorThrown = false;
+               try {
+                  c.test ([['b', function (wait) {wait ('foo')}, function () {}]]);
+               }
+               catch (err) {
+                  errorThrown = true;
+               }
+               if (! errorThrown) return 'c.test didn\'t validate `wait` parameter passed to `next` function #2.';
+
+               if (c.test ([]) !== undefined) return 'c.test didn\'t accept empty `tests` array.';
+
+               c.test ([['unfinished', function () {}, function () {throw new Error ('Check function was executed synchronously.')}]]);
+
+               var testObject = {};
+
+               c.test ([
+                  ['a1', function () {testObject.a = 0; return true}, function () {
+                     return testObject.a === 0;
+                  }],
+                  ['a2', function () {testObject.b = testObject.a; return true}, function () {
+                     return testObject.b === 0;
+                  }],
+                  ['a3', function () {
+                     testObject.c = 0;
+                     return testObject.a === testObject.b;
+                  }],
+                  ['a4', function (next) {testObject.d = 0; next ()}, function () {
+                     testObject.t = teishi.time ();
+                     return testObject.d === 0;
+                  }],
+                  ['a5', function (next) {next (10)}, function () {
+
+                     if ((teishi.time () - testObject.t) < 10) throw new Error ('c.test didn\'t specify timeout properly.');
+
+                     if (c.ajax (/invalidmethod/, /invalidpath/) !== false) throw new Error ('c.ajax didn\'t validate its input.');
+
+                     var jsonajax = c.ajax ('post', 'notaroute', {}, {a: 'b'}, function () {});
+
+                     if (type (jsonajax) !== 'object' || ! teishi.eq ({headers: jsonajax.headers, body: jsonajax.body}, {headers: {'content-type': 'application/json'}, body: '{"a":"b"}'})) throw new Error ('Error when sending a JSON request through c.ajax.');
+
+                     var error;
+                     var ajax = c.ajax ('get', 'notaroute', null, null, function () {
+                        if (error) return;
+                        c.loadScript ('cocholate.js', function () {
+                           if (arguments [1] && type (arguments [1].headers) !== 'object') throw new Error ('Empty headers are not processed correctly');
+                           // We ignore CORS errors when running the test locally.
+                           if (! (arguments [0] && arguments [0].status === 0)) {
+                              if (arguments.length !== 2) throw new Error ('Script was not loaded.');
+                           }
+
+                           c.loadScript ('nosuchscript.js', function () {
+                              if (arguments.length !== 1) throw new Error ('Invalid script was loaded.');
+
+                              if (c.loadScript (false, function () {}) !== false) throw new Error ('Invalid invocation to c.ajax wasn\'t returned by c.loadScript.')
+
+                              var result = c.loadScript ('nosuchscript.js');
+                              if (type (result) !== 'object') throw new Error ('c.loadScript didn\'t return the request object returned by c.ajax.');
+
+                              setTimeout (function () {
+                                 if (! error) clog ('Success', 'All tests were successful!');
+                                 if (! error) c.fill ('body', lith.g ('All tests were successful!'));
+                              }, 200);
+                           });
+                        });
+                     });
+
+                     if (type (ajax) !== 'object' || type (ajax.headers) !== 'object' || type (ajax.body) !== 'string' || type (ajax.xhr) !== 'object') {
+                        error = true;
+                        throw new Error ('c.ajax didn\'t return a valid object.');
+                     }
+                  }]
+               ]);
             });
          });
 
