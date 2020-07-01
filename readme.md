@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v3.0.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v3.0.1, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -30,7 +30,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@3199cebc19ec639abf242fd8788481b65c7dc3a3/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@f93f247a01a08e31658fa41f3250f8bbfb3d9080/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@16c47960618399e3fef5894bf7270c5f5d612efc/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -102,7 +102,7 @@ If you invoke `c` with the string `'body'` as the selector, you will receive onl
 c ('body') === document.body // this line will be true
 ```
 
-Note: in old browsers that do not support `querySelectorAll` (Firefox 3 and below, Internet Explorer 7 and below), cocholate provides a limited variety of selectors, with the following shapes: `TAG`, `#ID`, `.CLASS`, `TAG#ID` and `TAG.CLASS`. In these old browsers, if you use a selector that does not conform to these specific forms, cocholate will print an error and return `false`.
+Note: in old browsers that do not support `querySelectorAll` (Firefox 3 and below, Internet Explorer 7 and below), cocholate provides a limited variety of selectors, with the following shapes: `TAG`, `#ID`, `.CLASS`, `TAG#ID` and `TAG.CLASS`. In these old browsers, if you use a selector that does not conform to these specific forms, cocholate will print an error and return `false`; in particular, the following characters are forbidden in selectors: `,>[]`.
 
 If instead of searching from all elements you want to search within a specific element, instead of a string selector you can use an object with the form `{selector: SELECTOR, from: FROM}`, where `SELECTOR` is the string selector and `FROM` is an DOM element. For example:
 
@@ -468,7 +468,7 @@ Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v3.0.0
+cocholate - v3.0.1
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -808,10 +808,10 @@ If `selector` is an object, we reassign it to `selector.selector`.
 
 We are going to provide limited support for selectors; namely, we will only support selectors of these shapes: `TAG`, `TAG#ID`, `TAG.CLASS`, `#ID`, `.CLASS`. Note that we also support `*`, since it's possible to pass a wildcard to `document.getElementsByTagName` (which means that all elements will be selected).
 
-If `selector` doesn't conform to any of these shapes, we will print an error and return false.
+If `selector` doesn't conform to any of these shapes, we will print an error and return `false`. We make sure to forbid the characters `,`, `>`, `[` and `]` since those have special meaning on modern DOM selectors.
 
 ```javascript
-         if (selector !== '*' && ! selector.match (/^[a-z0-9]*(#|\.)?[a-z0-9]+$/i)) return clog ('The selector ' + selector + ' is not supported in IE <= 7 or Firefox <= 3.');
+         if (selector !== '*' && ! selector.match (/^[a-z0-9]*(#|\.)?[^,>\[\]]+$/i)) return clog ('The selector ' + selector + ' is not supported in IE <= 7 or Firefox <= 3.');
 ```
 
 If we're here, `selector` is supported. We will now determine what's the criterium for selecting elements; if there's a `#` in the selector, it will be by `id`; if there's a `.`, it will be by `class`. If there's neither, we'll set it to `undefined` (in which case it means that we will select elements by tag).

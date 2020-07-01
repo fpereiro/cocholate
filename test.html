@@ -70,6 +70,13 @@
                if (c (document.body, /invalidfun/) !== false) return 'Invalid function was considered valid #2.';
                if (c ('body') !== document.body)              return 'Find could not locate body #1.';
                if (c (document.body) !== document.body)       return 'When passing DOM element, c is not returning it.';
+               if (! document.querySelectorAll) {
+                  if (c ('#a-b') !== undefined)    return 'Valid selector with special characters wasn\'t accepted #1.';
+                  if (c ('#в') !== undefined)      return 'Valid selector with special characters wasn\'t accepted #2.';
+                  if (c ('a>b') !== false)         return 'Invalid selector with special characters was accepted #1.';
+                  if (c ('a,b') !== false)         return 'Invalid selector with special characters was accepted #2.';
+                  if (c ('div[data=b]') !== false) return 'Invalid selector with special characters was accepted #3.';
+               }
 
                c.fill ('body', lith.g ([
                   ['div', {"class": 'hola'}, 'Content'],

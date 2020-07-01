@@ -1,5 +1,5 @@
 /*
-cocholate - v3.0.0
+cocholate - v3.0.1
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -106,7 +106,7 @@ Please refer to readme.md to read the annotated source.
 
          var from = selector.from ? selector.from : document;
          selector = selectorType === 'string' ? selector : selector.selector;
-         if (selector !== '*' && ! selector.match (/^[a-z0-9]*(#|\.)?[a-z0-9]+$/i)) return clog ('The selector ' + selector + ' is not supported in IE <= 7 or Firefox <= 3.');
+         if (selector !== '*' && ! selector.match (/^[a-z0-9]*(#|\.)?[^,>\[\]]+$/i)) return clog ('The selector ' + selector + ' is not supported in IE <= 7 or Firefox <= 3.');
 
          var criterium = selector.match ('#') ? 'id' : (selector.match (/\./) ? 'class' : undefined);
          selector = selector.split (/#|\./);
