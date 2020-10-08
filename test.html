@@ -8,7 +8,7 @@
       <script src="https://cdn.jsdelivr.net/gh/douglascrockford/JSON-js@aef828bfcd7d5efaa41270f831f8d27d5eef3845/json2.min.js"></script>
       <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@3199cebc19ec639abf242fd8788481b65c7dc3a3/dale.js"></script>
       <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@f93f247a01a08e31658fa41f3250f8bbfb3d9080/teishi.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@a815e5e44b798793f74a29e05a10a6f12c490274/lith.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@b936379e67e0d838fff34285d3dbf59171f199c6/lith.js"></script>
       <script src="cocholate.js"></script>
       <script>
 
@@ -203,6 +203,11 @@
                // All major browsers except for Internet Explorer stringify the opacity, so we do that too.
                if (! teishi.eq ({width: allcssattrs.width, opacity: allcssattrs.opacity + ''}, {width: '200px', opacity: '0.9'})) return 'c.get didn\'t bring all CSS attributes.';
 
+               c.fill ('body', lith.g (['div', {id: 'test'}]));
+               // Test that we can pass a DOM element as the target.
+               c.set (c ('#test'), {'class': 'parte'});
+               if (! teishi.eq (c.get ('#test', 'class'), {'class': 'parte'})) return 'Could not pass a DOM element as target.';
+
                c.fill ('body', lith.g (dale.go (['red', 'blue', 'green'], function (v, k) {
                   return ['p', {id: 'a' + k, "class": v}];
                })));
@@ -264,21 +269,25 @@
                c.get   (/abc/, 'class');
                c.set   (/abc/, {'class': null});
 
-               var wha;
-               var styl;
-               c ('#wha').onchange = function () {
+               var wha, styl, evType;
+               c ('#wha').onchange = function (ev) {
                   wha  = this.value;
                   styl = this.style.color;
+                  // IE<=8 doesn't seem to pass arguments to event handlers, even when passed explicitly.
+                  evType = arguments.length ? ev.type : 'change';
                }
                c.set ('#wha', {value: 2});
                if (wha !== '2') return 'onchange wasn\'t fired by c.set #1.';
+               if (evType !== 'change') return 'onchange event wasn\'t passed by c.set #1.';
                c.set ('#wha', {color: 'lime'}, true);
                if (styl !== 'lime' && styl !== '#00ff00') return 'onchange wasn\'t fired by c.set #2.';
+               if (evType !== 'change') return 'onchange event wasn\'t passed by c.set #2.';
 
                c.set ('#wha', {value: 3}, false, true);
                c.set ('#wha', {color: 'magenta'}, true, true);
                if (wha !== '2') return 'onchange wasn\'t detriggered by c.set.';
                if (styl !== 'lime' && styl !== '#00ff00') return 'onchange wasn\'t fired by c.set #3.';
+               if (evType !== 'change') return 'onchange event wasn\'t passed by c.set #3.';
 
                // Check insertAdjacentElement against empty div.
                c.fill ('body', lith.g (['div', {id: 'reference'}]));

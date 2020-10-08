@@ -1,5 +1,5 @@
 /*
-cocholate - v3.0.1
+cocholate - v3.0.2
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -194,7 +194,7 @@ Please refer to readme.md to read the annotated source.
             else if  (v === null) element.removeAttribute (k);
             else                  element.setAttribute    (k, v);
          });
-         if (element.onchange && ! notrigger) element.onchange ();
+         if (! notrigger) c.fire (element, 'change');
       });
    }
 
@@ -210,8 +210,13 @@ Please refer to readme.md to read the annotated source.
             if (document.createEvent) ev.initEvent (eventType, false, false);
          }
          if (element.dispatchEvent) return element.dispatchEvent (ev);
-         if (element.fireEvent)     return element.fireEvent     ('on' + eventType, ev);
-         return clog ('c.fire error', 'Unfortunately, this browser supports neither EventTarget.dispatchEvent nor element.fireEvent.');
+         if (! element.fireEvent) return clog ('c.fire error', 'Unfortunately, this browser supports neither EventTarget.dispatchEvent nor element.fireEvent.');
+         try {
+            element.fireEvent ('on' + eventType, ev);
+         }
+         catch (error) {
+            if (element ['on' + eventType]) element ['on' + eventType] ();
+         }
       });
    }
 

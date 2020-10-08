@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v3.0.1, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v3.0.2, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -30,7 +30,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@3199cebc19ec639abf242fd8788481b65c7dc3a3/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@f93f247a01a08e31658fa41f3250f8bbfb3d9080/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@a5a4b473341a0b3dcd7bce028a588d8d25c5cf6b/cocholate.js"></script>
+<script src=""></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -468,7 +468,7 @@ Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v3.0.1
+cocholate - v3.0.2
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -1155,10 +1155,10 @@ If we're instead setting an HTML attribute, we use either `removeAttribute` or `
          });
 ```
 
-If the `element` has an `onchange` event listener, and the `notrigger` flag is *absent*, we invoke the element's `onchange` listener. This means that by default `c.set` will trigger `element.onchange` for those elements that it matches and that have the event handler.
+If the `notrigger` flag is *absent*, we fire a `change` event on the element through `c.fire`, which is defined later. This means that by default `c.set` will trigger a `change` event for those elements that it matches.
 
 ```javascript
-         if (element.onchange && ! notrigger) element.onchange ();
+         if (! notrigger) c.fire (element, 'change');
 ```
 
 There's nothing else to do, so we close the function. Note that we don't return any values.
@@ -1220,16 +1220,28 @@ If the browser supports the [`dispatchEvent` method](https://developer.mozilla.o
          if (element.dispatchEvent) return element.dispatchEvent (ev);
 ```
 
-For Internet Explorer 8 and below, we instead invoke `fireEvent`. Note that we pass both `eventType` and the event itself. Also notice we prepend `'on'` to the `eventType`, so that (for example), `click` becomes `onclick`.
+If the browser doesn't support `fireEvent`, there's no available method with which to fire the event. In this case, we print an error and return `false`.
 
 ```javascript
-         if (element.fireEvent)     return element.fireEvent     ('on' + eventType, ev);
+         if (! element.fireEvent) return clog ('c.fire error', 'Unfortunately, this browser supports neither EventTarget.dispatchEvent nor element.fireEvent.');
 ```
 
-If the browser supports neither method, we print an error.
+For Internet Explorer 8 and below, we instead invoke `fireEvent`. Note that we pass both `eventType` and the event itself. Also notice we prepend `'on'` to the `eventType`, so that (for example), `click` becomes `onclick`.
+
+We wrap this statement into a `try` block because some the combination of some events and node elements throws an error in Internet Explorer 8 and below - for example, a `change` event on a `<div>`.
 
 ```javascript
-         return clog ('c.fire error', 'Unfortunately, this browser supports neither EventTarget.dispatchEvent nor element.fireEvent.');
+         try {
+            element.fireEvent ('on' + eventType, ev);
+         }
+```
+
+If `fireEvent` throws an error, we detect whether there's a handler for the event. If there is, we execute it. While we could pass `ev` as an argument to it, arguments seem to be ignored altogether and are not received by the event handlers.
+
+```javascript
+         catch (error) {
+            if (element ['on' + eventType]) element ['on' + eventType] ();
+         }
 ```
 
 There's nothing else to do, so we close the function. Note that we don't return any values.
