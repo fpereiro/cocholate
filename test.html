@@ -190,10 +190,14 @@
                if (c (cdiv).length !== 3) 'c.set didn\'t work.';
 
                if (c.get (cdiv, 'class') [0] ['class'] !== 'someclass') return 'c.get didn\'t work #1.';
-               var allattrs = c.get (cdiv) [0];
+               var allAttrs = c.get (cdiv) [0];
                // We delete the `contentEditable` property because IE6-7 will add this property that we haven't set ourselves.
-               delete allattrs.contentEditable;
-               if (! teishi.eq (allattrs, {id: 'beforeinner', 'class': 'someclass'})) return 'c.get didn\'t bring all attributes.';
+               delete allAttrs.contentEditable;
+               if (! teishi.eq (allAttrs, {id: 'beforeinner', 'class': 'someclass'})) return 'c.get didn\'t bring all attributes.';
+
+               var allAttrsNoClass = c.get ('div') [0];
+               delete allAttrsNoClass.contentEditable;
+               if (! teishi.eq (allAttrsNoClass, {id: 'beforecontainer'})) return 'c.get didn\'t bring all attributes on element with no class.';
 
                c.set (cdiv, {width: '200px', opacity: 0.9}, true);
 

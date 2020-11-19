@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v3.0.2, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v3.0.3, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -30,7 +30,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@3199cebc19ec639abf242fd8788481b65c7dc3a3/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@f93f247a01a08e31658fa41f3250f8bbfb3d9080/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@5da81a9d216f8ea8740a02c69307c1d12de6a1bc/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -468,7 +468,7 @@ Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v3.0.2
+cocholate - v3.0.3
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -1048,7 +1048,7 @@ If the `css` flag is disabled, we will instead return the element's attribute (a
 If we're here, `attributes` is `undefined`, which means we want all the element's attributes. If `css` is falsy, we want the actual attributes (as opposed to the style attributes) of the element. We iterate `element.attributes`. Note that we start with a base object with the element's `class` or the element `className` (if `class` is absent) - this is only for the benefit of Internet Explorer 7 and below.
 
 ```javascript
-         if (! css) return dale.obj (element.attributes, {'class': element ['class'] || element.className}, function (v, k) {
+         if (! css) return dale.obj (element.attributes, (element ['class'] || element.className) ? {'class': element ['class'] || element.className} : {}, function (v, k) {
 ```
 
 If the attribute is truthy, if its `nodeName` is truthy, and its `nodeValue` is not one of the values we are ignoring, we return them both. Checking whether the attribute is truthy is only necessary in Internet Explorer 7 and below; many browsers, however, require us to check whether `nodeName` is truthy, otherwise `undefined` attributes will be returned.
