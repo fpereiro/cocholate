@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v3.0.3, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v3.1.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -29,8 +29,8 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@3199cebc19ec639abf242fd8788481b65c7dc3a3/dale.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@f93f247a01a08e31658fa41f3250f8bbfb3d9080/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@5867b63a1fccc3d232cd6fb3a49a8fa9f706cf35/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@31a9cf552dbaee79fb1c2b7d12c6fad20f987983/teishi.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -46,8 +46,6 @@ Browser compatibility has been tested in the following browsers:
 - Yandex 14.12 and above.
 
 The author wishes to thank [Browserstack](https://browserstack.com) for providing tools to test cross-browser compatibility.
-
-<a href="https://www.browserstack.com"><img src="https://bstacksupport.zendesk.com/attachments/token/kkjj6piHDCXiWrYlNXjKbFveo/?name=Logo-01.svg" width="150px" height="33px"></a>
 
 ## Loading cocholate
 
@@ -460,6 +458,12 @@ This function allows to define and execute tests. It's meant as an ultra lightwe
 
 If `c.test` receives an invalid `tests` array, it will print an error and return `false`. Otherwise, the function will return `undefined`. Note that, whether the test suite fails or succeeds, `c.test` will return `undefined` - `false` only denotes invalid tests.
 
+### `prod` mode
+
+cocholate's functions spend most of its running time (easily 80-90%) performing validations to their inputs. While validation is essential to shorten the debug cycle when developing, in certain cases you might want to turn it off to improve performance. This can be done by enabling `prod` mode. To do this, set `c.prod` to `true`.
+
+The cost of turning off validation is that if there's an invalid invocation somewhere, an error will be thrown.
+
 ## Source code
 
 The complete source code is contained in `cocholate.js`. It is about 340 lines long.
@@ -468,7 +472,7 @@ Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v3.0.3
+cocholate - v3.1.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -497,10 +501,10 @@ We require [dale](http://github.com/fpereiro/dale) and [teishi](http://github.co
    var teishi = window.teishi;
 ```
 
-We create an alias to `teishi.type`, the function for finding out the type of an element. We do the same for `teishi.clog`, a function for printing logs that also returns `false`.
+We create an alias to `teishi.type`, the function for finding out the type of an element. We do the same for `teishi.clog`, a function for printing logs that also returns `false`. We also do the same for `teishi.inc`, a function for checking whether a given element is contained in an array.
 
 ```javascript
-   var type = teishi.type, clog = teishi.clog;
+   var type = teishi.type, clog = teishi.clog, inc = teishi.inc;
 ```
 
 ### Polyfill for `insertAdjacentHTML`
@@ -571,10 +575,12 @@ We define `c`, the main function of the library. Note we also attach it to `wind
    var c = window.c = function (selector, fun) {
 ```
 
-We check that `fun` is a function or `undefined`. If it is neither, an error is printed and the function returns `false`.
+If `prod` mode is not enabled, we check that `fun` is a function or `undefined`. If it is neither, an error is printed and the function returns `false`.
+
+Note we pass `true` as the fourth argument to `teishi.stop`. We will do this for every invocation of `teishi.stop` and `teishi.v`, to tell teishi not to validate our validation rules. This will yield a (very small) performance improvement.
 
 ```javascript
-      if (teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'])) return false;
+      if (! c.prod && teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'], undefined, true)) return false;
 ```
 
 We create a local variable that will indicate whether the `selector` is actually a DOM node.
@@ -671,7 +677,7 @@ If the operation is `and`, we go through the first set and create a new array fi
 
 ```javascript
       if (operation === 'and') return dale.fil (set1, undefined, function (v) {
-         return set2.indexOf (v) > -1 ? v : undefined;
+         if (inc (set2, v)) return v;
       });
 ```
 
@@ -686,7 +692,7 @@ If the operation is `or`, we iterate the elements of the second set. Each of the
 ```javascript
       if (operation === 'or') {
          dale.go (set2, function (v) {
-            if (output.indexOf (set2) === -1) output.push (v);
+            if (! inc (output, v)) output.push (v);
          });
       }
 ```
@@ -735,7 +741,7 @@ We get the type of `selector`.
 `selector` must be either an array, a string or an object.
 
 ```javascript
-      if (teishi.stop ('cocholate', [
+      if (! c.prod && teishi.stop ('cocholate', [
          ['selector', selector, ['array', 'string', 'object'], 'oneOf'],
 ```
 
@@ -761,7 +767,7 @@ An implementation note: we write this last validation rule as a function and not
 
 ```javascript
                function () {
-                  if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return clog ('teishi.v', 'selector.from passed to cocholate must be a DOM element.');
+                  if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return clog ('c.find', 'selector.from passed to cocholate must be a DOM element.');
                   return true;
                }
 ```
@@ -771,7 +777,7 @@ If any of the validations fail, we print an error and return `false`.
 ```javascript
             ]]
          ]}
-      ])) return false;
+      ], undefined, true)) return false;
 ```
 
 First we'll cover the cases where `selector` is either a string or an object.
@@ -845,7 +851,7 @@ The invocation to `getElementsByTagName` returns a NodeList. We convert it to an
 If we're selecting elements by `class` and this element's class doesn't match it, we ignore the element. Note we split `node.className` (if it exists) by whitespace into an array of classes, and make sure that the class we're looking for is one of the elements of that array.
 
 ```javascript
-            if (criterium === 'class' && (node.className || '').split (/\s/).indexOf (teishi.last (selector)) === -1) return;
+            if (criterium === 'class' && ! inc ((node.className || '').split (/\s/), teishi.last (selector))) return;
 ```
 
 If we're selecting an element by `id` and the element's id doesn't match the id we're looking for, we ignore the element.
@@ -956,7 +962,7 @@ We now define `c.fill`, which takes `selector` and `html` as arguments.
 If `html` is not a string, the function will print an error message and return `false`.
 
 ```javascript
-      if (teishi.stop ('c.fill', ['html', html, 'string'])) return false;
+      if (! c.prod && teishi.stop ('c.fill', ['html', html, 'string'], undefined, true)) return false;
 ```
 
 We iterate the elements matched by `selector` (through a call to `c`) and set their `innerHTML` property to `html`.
@@ -982,10 +988,10 @@ We now define `c.place`, a function that takes three arguments: `selector`, `whe
 We make sure that `where` is one of four strings: `beforeBegin|afterBegin|beforeEnd|afterEnd`, and that `html` is a string. If either of these conditions is not fulfilled, we print an error message and return `false`.
 
 ```javascript
-      if (teishi.stop ('c.place', [
+      if (! c.prod && teishi.stop ('c.place', [
          ['where', where, ['beforeBegin', 'afterBegin', 'beforeEnd', 'afterEnd'], 'oneOf', teishi.test.equal],
          ['html', html, 'string']
-      ])) return false;
+      ], undefined, true)) return false;
 ```
 
 For each of the elements matching `selector`, we apply [insertAdjacentHTML](https://developer.mozilla.org/en-US/docs/Web/API/Element/insertAdjacentHTML) with `where` and `html` as its arguments.
@@ -1011,7 +1017,7 @@ We now define `c.get`, which takes three arguments: `selector`, `attributes` and
 If `attributes` is not string, `undefined`, nor an array, we print an error and return `false`.
 
 ```javascript
-      if (teishi.stop ('c.get', ['attributes', attributes, ['string', 'array', 'undefined'], 'oneOf'])) return false;
+      if (! c.prod && teishi.stop ('c.get', ['attributes', attributes, ['string', 'array', 'undefined'], 'oneOf'], undefined, true)) return false;
 ```
 
 We define an array `ignoredValues` with attribute values which we will ignore. This is only necessary for iterating style attributes in Internet Explorer 8 and element attributes in Internet Explorer 7 and below.
@@ -1054,7 +1060,7 @@ If we're here, `attributes` is `undefined`, which means we want all the element'
 If the attribute is truthy, if its `nodeName` is truthy, and its `nodeValue` is not one of the values we are ignoring, we return them both. Checking whether the attribute is truthy is only necessary in Internet Explorer 7 and below; many browsers, however, require us to check whether `nodeName` is truthy, otherwise `undefined` attributes will be returned.
 
 ```javascript
-            if (v && v.nodeName && ignoredValues.indexOf (v.nodeValue) === -1) return [v.nodeName, v.nodeValue];
+            if (v && v.nodeName && ! inc (ignoredValues, v.nodeValue)) return [v.nodeName, v.nodeValue];
          });
 ```
 
@@ -1073,7 +1079,7 @@ If `element.style.length` is supported, we simply return the corresponding key a
 For Internet Explorer 8 and below, we return the key and value but only if the value is not one of the `ignoredValues`.
 
 ```javascript
-            if (ignoredValues.indexOf (element.style [k]) === -1) return [k, element.style [k]];
+            if (! inc (ignoredValues, element.style [k])) return [k, element.style [k]];
          });
 ```
 
@@ -1093,7 +1099,7 @@ We now define `c.set`. It is similar to `c.get`, but instead of returning attrib
 We now validate the input. `attributes` must be an object.
 
 ```javascript
-      if (teishi.stop ('c.set', [
+      if (! c.prod && teishi.stop ('c.set', [
          ['attributes', attributes, 'object'],
 ```
 
@@ -1126,7 +1132,7 @@ The attribute values must be either integers, floats, strings or `null`.
 If any of these conditions is not met, an error will be printed and the function will return `false`.
 
 ```javascript
-      ])) return false;
+      ], undefined, true)) return false;
 ```
 
 For each of the elements that are matched by `selector`, we will invoke the following function.
@@ -1177,7 +1183,7 @@ We now define `c.fire`, the last DOM function. For each matched element, this fu
 If `eventType` is not a string, we print an error and return `false`.
 
 ```javascript
-      if (teishi.stop ('c.fire', ['event type', eventType, 'string'])) return false;
+      if (! c.prod && teishi.stop ('c.fire', ['event type', eventType, 'string'], undefined, true)) return false;
 ```
 
 For each of the elements that are matched by `selector`, we will invoke the following function.
@@ -1396,12 +1402,12 @@ Notice we don't set `path` to anything if it's absent, since no sensible default
 We make sure that `method` and `path` are strings, that `headers` is an object and that `callback` is a function. If any of these conditions is not met, we print an error and return `false`.
 
 ```javascript
-      if (teishi.stop ('c.ajax', [
+      if (! c.prod && teishi.stop ('c.ajax', [
          ['method',   method,   'string'],
          ['path',     path,     'string'],
          ['headers',  headers,  'object'],
          ['callback', callback, 'function']
-      ])) return false;
+      ], undefined, true)) return false;
 ```
 
 We initialize the XMLHttpRequest object, which will be present in [most browsers](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest#Browser_compatibility). In Internet Explorer 5 and 6, `XMLHttpRequest` is absent, but we can use `ActiveXObject` [instead](https://developer.mozilla.org/en-US/docs/Web/API/XMLHttpRequest/Using_XMLHttpRequest_in_IE6).
@@ -1596,7 +1602,7 @@ We define `c.test`, a function to execute a test suite on the browser. This func
 `tests` must be an array and each of its elements must also be an array.
 
 ```javascript
-      if (teishi.stop ('c.test', [
+      if (! c.prod && teishi.stop ('c.test', [
          ['tests', tests, 'array'],
          ['tests', tests, 'array', 'each'],
 ```
@@ -1632,7 +1638,7 @@ If the test has length 2, we expect its second element to be a function (the `ch
 If any of these checks fails, an error will be printed and `c.test` will return `false`.
 
 ```javascript
-      ])) return false;
+      ], undefined, true)) return false;
 ```
 
 We define two variables: `start`, to mark the beginning time of the test suite; and `runNext`, a function that will run one `test` at a time. `runNext` takes an index `k` as its sole argument. We now proceed to define this function.

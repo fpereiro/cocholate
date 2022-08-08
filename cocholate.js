@@ -1,5 +1,5 @@
 /*
-cocholate - v3.0.3
+cocholate - v3.1.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -15,7 +15,7 @@ Please refer to readme.md to read the annotated source.
    var dale   = window.dale;
    var teishi = window.teishi;
 
-   var type = teishi.type, clog = teishi.clog;
+   var type = teishi.type, clog = teishi.clog, inc = teishi.inc;
 
    // *** POLYFILL FOR insertAdjacentHTML ***
 
@@ -35,7 +35,7 @@ Please refer to readme.md to read the annotated source.
    // *** CORE ***
 
    var c = window.c = function (selector, fun) {
-      if (teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'])) return false;
+      if (! c.prod && teishi.stop ('c', ['fun', fun, ['function', 'undefined'], 'oneOf'], undefined, true)) return false;
 
       var selectorIsNode = selector && selector.nodeName;
 
@@ -63,12 +63,12 @@ Please refer to readme.md to read the annotated source.
 
    c.setop = function (operation, set1, set2) {
       if (operation === 'and') return dale.fil (set1, undefined, function (v) {
-         return set2.indexOf (v) > -1 ? v : undefined;
+         if (inc (set2, v)) return v;
       });
       var output = set1.slice ();
       if (operation === 'or') {
          dale.go (set2, function (v) {
-            if (output.indexOf (set2) === -1) output.push (v);
+            if (! inc (output, v)) output.push (v);
          });
       }
       else {
@@ -85,7 +85,7 @@ Please refer to readme.md to read the annotated source.
 
       var selectorType = type (selector);
 
-      if (teishi.stop ('cocholate', [
+      if (! c.prod && teishi.stop ('cocholate', [
          ['selector', selector, ['array', 'string', 'object'], 'oneOf'],
          function () {return [
             [selectorType === 'array',  ['first element of array selector', selector [0], [':and', ':or', ':not'], 'oneOf', teishi.test.equal]],
@@ -93,12 +93,12 @@ Please refer to readme.md to read the annotated source.
                ['selector keys', dale.keys (selector), ['selector', 'from'], 'eachOf', teishi.test.equal],
                ['selector.selector', selector.selector, ['array', 'string'], 'oneOf'],
                function () {
-                  if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return clog ('teishi.v', 'selector.from passed to cocholate must be a DOM element.');
+                  if (type (selector.from) !== 'object' || (document.querySelectorAll && ! selector.from.querySelectorAll)) return clog ('c.find', 'selector.from passed to cocholate must be a DOM element.');
                   return true;
                }
             ]]
          ]}
-      ])) return false;
+      ], undefined, true)) return false;
 
       if (selectorType !== 'array') {
          if (document.querySelectorAll && selectorType === 'string') return c.nodeListToArray (document.querySelectorAll (selector));
@@ -113,7 +113,7 @@ Please refer to readme.md to read the annotated source.
          var tag = (selector.length === 2 || ! criterium) ? selector [0].toUpperCase () : undefined;
 
          return dale.fil (c.nodeListToArray (from.getElementsByTagName (tag || '*')), undefined, function (node) {
-            if (criterium === 'class' && (node.className || '').split (/\s/).indexOf (teishi.last (selector)) === -1) return;
+            if (criterium === 'class' && ! inc ((node.className || '').split (/\s/), teishi.last (selector))) return;
             if (criterium === 'id'    && node.id !== teishi.last (selector)) return;
             return node;
          });
@@ -139,7 +139,7 @@ Please refer to readme.md to read the annotated source.
    }
 
    c.fill = function (selector, html) {
-      if (teishi.stop ('c.fill', ['html', html, 'string'])) return false;
+      if (! c.prod && teishi.stop ('c.fill', ['html', html, 'string'], undefined, true)) return false;
 
       c (selector, function (element) {
          element.innerHTML = html;
@@ -147,10 +147,10 @@ Please refer to readme.md to read the annotated source.
    }
 
    c.place = function (selector, where, html) {
-      if (teishi.stop ('c.place', [
+      if (! c.prod && teishi.stop ('c.place', [
          ['where', where, ['beforeBegin', 'afterBegin', 'beforeEnd', 'afterEnd'], 'oneOf', teishi.test.equal],
          ['html', html, 'string']
-      ])) return false;
+      ], undefined, true)) return false;
 
       c (selector, function (element) {
          element.insertAdjacentHTML (where, html);
@@ -158,7 +158,7 @@ Please refer to readme.md to read the annotated source.
    }
 
    c.get  = function (selector, attributes, css) {
-      if (teishi.stop ('c.get', ['attributes', attributes, ['string', 'array', 'undefined'], 'oneOf'])) return false;
+      if (! c.prod && teishi.stop ('c.get', ['attributes', attributes, ['string', 'array', 'undefined'], 'oneOf'], undefined, true)) return false;
       var ignoredValues = [null, '', false, 0, "false"];
 
       return c (selector, function (element) {
@@ -167,17 +167,17 @@ Please refer to readme.md to read the annotated source.
             else     return [v, element.getAttribute (v)];
          });
          if (! css) return dale.obj (element.attributes, (element ['class'] || element.className) ? {'class': element ['class'] || element.className} : {}, function (v, k) {
-            if (v && v.nodeName && ignoredValues.indexOf (v.nodeValue) === -1) return [v.nodeName, v.nodeValue];
+            if (v && v.nodeName && ! inc (ignoredValues, v.nodeValue)) return [v.nodeName, v.nodeValue];
          });
          return dale.obj (element.style.length ? dale.times (element.style.length, 0) : dale.keys (element.style), function (k) {
             if (element.style.length) return [element.style [k], element.style [element.style [k]]];
-            if (ignoredValues.indexOf (element.style [k]) === -1) return [k, element.style [k]];
+            if (! inc (ignoredValues, element.style [k])) return [k, element.style [k]];
          });
       });
    }
 
    c.set  = function (selector, attributes, css, notrigger) {
-      if (teishi.stop ('c.set', [
+      if (! c.prod && teishi.stop ('c.set', [
          ['attributes', attributes, 'object'],
          [
             ['attribute keys', 'start with an ASCII letter, underscore or colon, and be followed by letters, digits, underscores, colons, periods, dashes, extended ASCII characters, or any non-ASCII characters.'],
@@ -186,7 +186,7 @@ Please refer to readme.md to read the annotated source.
             'each', teishi.test.match
          ],
          ['attribute values', attributes, ['integer', 'float', 'string', 'null'], 'eachOf']
-      ])) return false;
+      ], undefined, true)) return false;
 
       c (selector, function (element) {
          dale.go (attributes, function (v, k) {
@@ -199,7 +199,7 @@ Please refer to readme.md to read the annotated source.
    }
 
    c.fire = function (selector, eventType) {
-      if (teishi.stop ('c.fire', ['event type', eventType, 'string'])) return false;
+      if (! c.prod && teishi.stop ('c.fire', ['event type', eventType, 'string'], undefined, true)) return false;
       c (selector, function (element) {
          var ev;
          try {
@@ -251,12 +251,12 @@ Please refer to readme.md to read the annotated source.
       headers  = headers  || {};
       body     = body     || '';
       callback = callback || function () {};
-      if (teishi.stop ('c.ajax', [
+      if (! c.prod && teishi.stop ('c.ajax', [
          ['method',   method,   'string'],
          ['path',     path,     'string'],
          ['headers',  headers,  'object'],
          ['callback', callback, 'function']
-      ])) return false;
+      ], undefined, true)) return false;
 
       var r = window.XMLHttpRequest ? new XMLHttpRequest () : new ActiveXObject ('Microsoft.XMLHTTP');
       r.open (method.toUpperCase (), path, true);
@@ -305,7 +305,7 @@ Please refer to readme.md to read the annotated source.
 
    c.test = function (tests) {
 
-      if (teishi.stop ('c.test', [
+      if (! c.prod && teishi.stop ('c.test', [
          ['tests', tests, 'array'],
          ['tests', tests, 'array', 'each'],
          dale.go (tests, function (test, k) {return [
@@ -316,7 +316,7 @@ Please refer to readme.md to read the annotated source.
                ['test #' + (k + 1) + ' check',  test [2], 'function']
             ]
          ]})
-      ])) return false;
+      ], undefined, true)) return false;
 
       var start = teishi.time (), runNext = function (k) {
          var test = tests [k];

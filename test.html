@@ -7,8 +7,8 @@
    <body>
       <script src="https://cdn.jsdelivr.net/gh/douglascrockford/JSON-js@aef828bfcd7d5efaa41270f831f8d27d5eef3845/json2.min.js"></script>
       <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@3199cebc19ec639abf242fd8788481b65c7dc3a3/dale.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@f93f247a01a08e31658fa41f3250f8bbfb3d9080/teishi.js"></script>
-      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@b936379e67e0d838fff34285d3dbf59171f199c6/lith.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@31a9cf552dbaee79fb1c2b7d12c6fad20f987983/teishi.js"></script>
+      <script src="https://cdn.jsdelivr.net/gh/fpereiro/lith@206ca67469ff0a8d6dcbc28593b3978e908c6cca/lith.js"></script>
       <script src="cocholate.js"></script>
       <script>
 
@@ -34,7 +34,9 @@
                }
             }
 
-            var type = teishi.type, clog = teishi.clog;
+            var type = teishi.type, clog = teishi.clog, inc = teishi.inc;
+
+            var done;
 
             var Test = function (fun) {
                var error = fun ();
@@ -42,9 +44,23 @@
                   alert (error);
                   throw new Error (error);
                }
+               setInterval (function () {
+                  if (! done) return;
+                  done = false;
+                  var perf = {dev: 0, prod: 0};
+                  dale.go (dale.times (5), function () {
+                     dale.go (['dev', 'prod'], function (mode) {
+                        c.prod = mode === 'prod';
+                        var time = teishi.time ();
+                        fun (true);
+                        perf [mode] += teishi.time () - time;
+                     });
+                  });
+                  c.fill ('body', lith.g (['All tests were successful!', ['br'], 'Performance: ', perf.dev, 'ms (dev), ', perf.prod, 'ms (prod)']));
+               }, 50);
             };
 
-            Test (function () {
+            Test (function (perf) {
 
                var counter = {};
                window.increment = function (ev) {
@@ -121,7 +137,7 @@
 
                if (c ([':or', 'div', 'p']).length !== 3) return 'or selector didn\'t work.';
 
-               if (c ([':or', [':or', 'div', 'p']]).length !== 3) return 'nested or selector didn\'t work.';
+               if (c ([':or', 'div', [':or', 'div', 'p']]).length !== 3) return 'nested or selector didn\'t work.';
 
                if (document.querySelectorAll) {
                   if (c ([':and', 'div *', 'p']).length !== 2) return 'and selector didn\'t work.';
@@ -294,14 +310,38 @@
                if (evType !== 'change') return 'onchange event wasn\'t passed by c.set #3.';
 
                // Check insertAdjacentElement against empty div.
-               c.fill ('body', lith.g (['div', {id: 'reference'}]));
+               c.fill ('body', lith.g (['div', {id: 'reference'}, ['a']]));
                c.place ('#reference', 'beforeBegin', 'a');
-               c.fill ('body', lith.g (['div', {id: 'reference'}]));
+               if (! inc ([
+                  'a<div id="reference"><a></a></div>',
+                  // Compatibility: IE<=8 removes the quotes of id, uppercases the tags and adds \r\n
+                  'a\r\n<DIV id=reference><A></A></DIV>'
+               ], document.body.innerHTML)) return 'insertAdjacentElement beforeBegin generated incorrect HTML: ' + document.body.innerHTML;
+
+               c.fill ('body', lith.g (['div', {id: 'reference'}, ['a']]));
                c.place ('#reference', 'afterBegin', 'b');
-               c.fill ('body', lith.g (['div', {id: 'reference'}]));
+               if (! inc ([
+                  '<div id="reference">b<a></a></div>',
+                  // Compatibility: IE<=8 removes the quotes of id and uppercases the tags
+                  '<DIV id=reference>b<A></A></DIV>'
+               ], document.body.innerHTML)) return 'insertAdjacentElement afterBegin generated incorrect HTML: ' + document.body.innerHTML;
+
+               c.fill ('body', lith.g (['div', {id: 'reference'}, ['a']]));
                c.place ('#reference', 'beforeEnd', 'c');
-               c.fill ('body', lith.g (['div', {id: 'reference'}]));
+               if (! inc ([
+                  '<div id="reference"><a></a>c</div>',
+                  // Compatibility: IE<=8 removes the quotes of id and uppercases the tags
+                  '<DIV id=reference><A></A>c</DIV>'
+               ], document.body.innerHTML)) return 'insertAdjacentElement beforeEnd generated incorrect HTML: ' + document.body.innerHTML;
+
+               c.fill ('body', lith.g (['div', {id: 'reference'}, ['a']]));
                c.place ('#reference', 'afterEnd', 'd');
+               if (! inc ([
+                  '<div id="reference"><a></a></div>d',
+                  // Compatibility: IE<=8 removes the quotes of id and uppercases the tags
+                  '<DIV id=reference><A></A></DIV>d'
+               ], document.body.innerHTML)) return 'insertAdjacentElement afterEnd generated incorrect HTML: ' + document.body.innerHTML;
+
                c.fill ('body', '');
                c.fill ('body', 'text');
 
@@ -339,6 +379,8 @@
                if (c.test ([]) !== undefined) return 'c.test didn\'t accept empty `tests` array.';
 
                c.test ([['unfinished', function () {}, function () {throw new Error ('Check function was executed synchronously.')}]]);
+
+               if (perf) return;
 
                var testObject = {};
 
@@ -380,14 +422,16 @@
                            c.loadScript ('nosuchscript.js', function () {
                               if (arguments.length !== 1) throw new Error ('Invalid script was loaded.');
 
-                              if (c.loadScript (false, function () {}) !== false) throw new Error ('Invalid invocation to c.ajax wasn\'t returned by c.loadScript.')
+                              if (c.loadScript (false, function () {}) !== false) throw new Error ('Invalid invocation to c.ajax wasn\'t returned by c.loadScript.');
 
-                              var result = c.loadScript ('nosuchscript.js');
+                              // In IE6, repeating the call to `nosuchscript.js` generates an alert with a warning about a missing semicolon (perhaps because the script is attempted to be loaded twice) - by changing the name to something else, the warning is avoided.
+                              var result = c.loadScript ('nosuchscript2.js');
                               if (type (result) !== 'object') throw new Error ('c.loadScript didn\'t return the request object returned by c.ajax.');
 
                               setTimeout (function () {
                                  if (! error) clog ('Success', 'All tests were successful!');
                                  if (! error) c.fill ('body', lith.g ('All tests were successful!'));
+                                 if (! error) done = true;
                               }, 200);
                            });
                         });
