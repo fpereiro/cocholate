@@ -6,7 +6,7 @@ cocholate is a small library for DOM manipulation. It's meant to be small, easil
 
 ## Current status of the project
 
-The current version of cocholate, v3.1.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
+The current version of cocholate, v4.0.0, is considered to be *stable* and *complete*. [Suggestions](https://github.com/fpereiro/cocholate/issues) and [patches](https://github.com/fpereiro/cocholate/pulls) are welcome. Besides bug fixes, there are no future changes planned.
 
 cocholate is part of the [ustack](https://github.com/fpereiro/ustack), a set of libraries to build web applications which aims to be fully understandable by those who use it.
 
@@ -30,7 +30,7 @@ Or you can use these links to the latest version - courtesy of [jsDelivr](https:
 ```html
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/dale@3199cebc19ec639abf242fd8788481b65c7dc3a3/dale.js"></script>
 <script src="https://cdn.jsdelivr.net/gh/fpereiro/teishi@31a9cf552dbaee79fb1c2b7d12c6fad20f987983/teishi.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@2847e66b2ca71859d648b09b699df75d347c3e01/cocholate.js"></script>
+<script src="https://cdn.jsdelivr.net/gh/fpereiro/cocholate@??/cocholate.js"></script>
 ```
 
 cocholate is exclusively a client-side library. Still, you can find it in npm: `npm install cocholate`
@@ -445,16 +445,19 @@ If the script is successfully fetched, `callback` will receive two arguments (`n
 
 ### `c.test`
 
-This function allows to define and execute tests. It's meant as an ultra lightweight yet effective test runner. This function takes one argument only, `tests`, which is an array. Each of the elements contained by `tests` should also be an array. The two possible forms for each `test` array is:
+This function allows to define and execute tests. It's meant as an ultra lightweight yet effective test runner. This function takes two arguments: `tests`, which is an array, and `callback`, which is an optional function to be executed when the test suite finishes running. Each of the elements contained by `tests` should also be an array. The three possible forms for each `test` array is:
 
 - `[TAG, ACTION, CHECK]`
 - `[TAG, CHECK]`
+- `[]` (this is a [no-op](https://en.wikipedia.org/wiki/NOP_(code)), useful for running a test only if a condition is met)
 
-`TAG` is a string which prints the name of the test being performed. `CHECK` is a synchronous function that performs a check; if the check fails, the function should return `false` - this will make `c.test` throw an error. Any other value returned by `CHECK` will signify a successful check and the sequence of tests will continue executing.
+`TAG` is a string which prints the name of the test being performed. `CHECK` is a synchronous function that performs a check; if the check is successful, the should return `true` - this will make `c.test` throw an error (unless you specify another behavior in `callback`). Any other value returned by `CHECK` (even `undefined`) will signify an error - in fact, the idea is that you return an error message whenever one of your checks fails.
 
-`ACTION` is a potentially asynchronous function that performs an action. It will be executed before `CHECK`. If this function returns a value other than `undefined`, it will be considered synchronous and `CHECK` will be executed immediately afterwards. If you however wish to perform an async operation, you can do so and not return any value. When the async operation is done, use the `next` function passed as the first argument to `ACTION`, which is the callback. If you wish to wait `n` milliseconds before `CHECK` gets called, pass a positive integer to `next` - this is equivalent as writing `setTimeout (next, <milliseconds>)`.
+`ACTION` is a potentially asynchronous function that performs an action. It will be executed before `CHECK`. If this function returns a value other than `undefined`, it will be considered synchronous and `CHECK` will be executed immediately afterwards. If you however wish to perform an async operation, you can do so and not return any value. When the async operation is done, use the `next` function passed as the first argument to `ACTION`, which is the callback. If you wish to wait `n` milliseconds before `CHECK` gets called, pass a non-negative integer to `next` - this is equivalent as writing `setTimeout (next, <milliseconds>)`.
 
-`c.test` will execute all tests in sequence and stop at the first error. It will print the `TAG` for each test about to be executed. If the test suite has executed successfully, `c.test` will print a message.
+If your desired wait time after an `ACTION` should be *at most* a certain number of milliseconds, you can pass a second argument to `next`, which will signify that the `CHECK` function should be executed every n milliseconds up until the total wait time (that you specified in the first argument) is elapsed. For example, if you invoke `next (1000, 10);` after executing an `ACTION`, the `CHECK` function will be run every 10 milliseconds, for up to a second, until either the `CHECK` function succeeds or the time runs up. This is very useful since most of the time, for async operations, you don't know exactly how long they will take. This, however, requires that your `CHECK` function should be able to be run multiple times without detriment to the state of the test suite.
+
+`c.test` will execute all tests in sequence and stop at the first error. It will print the `TAG` for each test about to be executed. If you have passed a `callback`, that function will receive either an `error` as its first argument or the number of milliseconds that the successful test run took to run as its second argument. If you don't provide a `callback` function, `c.test` will print either the error or success message to the console.
 
 If `c.test` receives an invalid `tests` array, it will print an error and return `false`. Otherwise, the function will return `undefined`. Note that, whether the test suite fails or succeeds, `c.test` will return `undefined` - `false` only denotes invalid tests.
 
@@ -466,13 +469,13 @@ The cost of turning off validation is that if there's an invalid invocation some
 
 ## Source code
 
-The complete source code is contained in `cocholate.js`. It is about 340 lines long.
+The complete source code is contained in `cocholate.js`. It is about 360 lines long.
 
 Below is the annotated source.
 
 ```javascript
 /*
-cocholate - v3.1.0
+cocholate - v4.0.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -1593,10 +1596,10 @@ We invoke `callback` with `null` and `data` as its arguments, to indicate succes
    }
 ```
 
-We define `c.test`, a function to execute a test suite on the browser. This function takes a single argument, `tests`.
+We define `c.test`, a function to execute a test suite on the browser. This function takes two argument: `tests` and `callback`.
 
 ```javascript
-   c.test = function (tests) {
+   c.test = function (tests, callback) {
 ```
 
 `tests` must be an array and each of its elements must also be an array.
@@ -1607,10 +1610,10 @@ We define `c.test`, a function to execute a test suite on the browser. This func
          ['tests', tests, 'array', 'each'],
 ```
 
-We iterate each of the `tests`.
+We iterate each of the `tests`. If a `test` is an empty array, we don't apply any further validation rules on it, since it represents a no-op. Otherwise, we proceed with its validation.
 
 ```javascript
-         dale.go (tests, function (test, k) {return [
+         dale.go (tests, function (test, k) {return test.length === 0 ? [] : [
 ```
 
 Each `test` must have a length of either two or three.
@@ -1632,7 +1635,13 @@ If the test has length 2, we expect its second element to be a function (the `ch
                ['test #' + (k + 1) + ' action', test [1], 'function'],
                ['test #' + (k + 1) + ' check',  test [2], 'function']
             ]
-         ]})
+         ]}),
+```
+
+`callback` must be either `undefined` or a `function`.
+
+```javascript
+         ['callback', callback, ['function', 'undefined'], 'oneOf']
 ```
 
 If any of these checks fails, an error will be printed and `c.test` will return `false`.
@@ -1641,41 +1650,74 @@ If any of these checks fails, an error will be printed and `c.test` will return 
       ], undefined, true)) return false;
 ```
 
-We define two variables: `start`, to mark the beginning time of the test suite; and `runNext`, a function that will run one `test` at a time. `runNext` takes an index `k` as its sole argument. We now proceed to define this function.
+If `callback` is not defined, we initialize it to a function that will either throw an error (if one is received as its first argument) or that prints a success message when the test suite finishes its execution.
+
+```javascript
+      callback = callback || function (error, time) {
+         if (error) throw new Error ('c.test: Test failed: ' + error.test + '; result: ' + error.result);
+         clog ('c.test', 'All tests finished successfully (' + (teishi.time () - start) + ' ms)');
+      }
+```
+
+We define two variables: `start`, to mark the beginning time of the test suite; and `runNext`, a function that will run one `test` at a time. `runNext` takes an index `k` as its sole argument. We now proceed to define this function, which is the engine of `c.test`.
 
 ```javascript
       var start = teishi.time (), runNext = function (k) {
 ```
 
-We define a local variable `test` and set it to the kth element of `tests`. This will be the test to be executed now.
+We select the k-th test based on the argument received by `runNext` and place it in a variable `test`.
 
 ```javascript
          var test = tests [k];
 ```
 
-If there're no tests left, we print a success message which contains the total execution time for the entire test suite.
+If there're no tests left, we invoke `callback` with a `null` first argument (to signify the absence of an error) and the total execution time for the entire test suite as its second argument. Note that we place a `return` before this invocation, to do no further actions if this is the case.
 
 ```javascript
-         if (! test) return clog ('c.test', 'All tests finished successfully (' + (teishi.time () - start) + ' ms)');
+         if (! test)            return callback (null, teishi.time () - start);
+```
+
+If the current `test` has no elements, it is a no-op. We invoke `runNext` with `k + 1` so that we can run the next test. Note that we place a `return` before this invocation, to do no further actions if this is the case.
+
+```javascript
+         if (test.length === 0) return runNext (k + 1);
 ```
 
 We define a function `check`, which will be a wrapper around the `check` function specified in the last argument of the current `test`.
 
+This function will take two optional arguments: `retry`, which indicates whether the check should be repeated if it were to fail; and `interval`, the result of a `setInterval` call that will repeatedly invoke the check function, which should be cleared when necessary.
+
 ```javascript
-         var check = function () {
+         var check = function (retry, interval) {
 ```
 
-We execute the `check` function (which will be the second or third element, depending on how many elements are contained by `test`) and store its result in a variable `result`. If `result` is `false`, this means the check has failed. We will throw an error, taking care of printing the `tag` of the test that failed.
+We execute the `check` function (which will be the second or third element, depending on how many elements are contained by `test`) and store its result in a variable `result`.
 
 ```javascript
-            var result = test [test.length === 2 ? 1 : 2] ();
-            if (result === false) throw new Error ('c.test: Test failed: ' + test [0]);
+            var result = test [test.length - 1] ();
 ```
 
-Otherwise, we'll invoke `runNext` on the next index. We close `check`.
+If `interval` was passed, this means that there's a `setInterval` function invoking the check function periodically. If this is the case, and either `result` is `true` (which means that the check was successful) or `retry` is not set (which means we should stop retrying the check), we clear the interval so it stops executing.
 
 ```javascript
-            runNext (k + 1);
+            if (interval && (result === true || ! retry)) clearInterval (interval);
+```
+
+If `result` is `true`, we invoke `runNext` with `k + 1`, to run the next test. Note we return on this line, to avoid performing any further actions.
+
+```javascript
+            if (result === true) return runNext (k + 1);
+```
+
+If we're here, `result` is not `true`, which means that the check has failed. If the `retry` flag is not set, we invoke the callback with an error of the form `{test: TAG, result: result}`.
+
+```javascript
+            if (! retry) callback ({test: test [0], result: result});
+```
+
+This concludes our wrapper around the `check` function provided in the test. Notice that if `retry` was set and the test fails, nothing will be done - in this case, there will be a `setInterval` function invoking this function again later.
+
+```javascript
          }
 ```
 
@@ -1691,31 +1733,55 @@ If there's no `action` function, we execute `check` directly and exit `runNext`.
          if (test.length === 2) return check ();
 ```
 
-If there's an `action` function, we invoke it passing to it another function as its first argument. This function is the `next` function, which will be optionally invoked by `action` to continue the chain of tests in case it performs an asynchronous operation.
+If there's an `action` function, we invoke it passing to it another function as its first argument. This function is the `next` function, which will be optionally invoked by `action` to continue the chain of tests in case it performs an asynchronous operation. This function can receive two arguments: `wait`, an integer telling us how many milliseconds to wait until performing the check (or a series of checks) - and `ms`, a positive integer telling us to repeat `check` every n milliseconds until either `wait` elapses or the check is successful.
 
 ```javascript
-         if (test [1] (function (wait) {
+         if (test [1] (function (wait, ms) {
 ```
 
-If the first argument passed to `next` is `undefined`, `next` will invoke `check` and return.
+If the first argument passed to `next` is `undefined`, `next` will invoke `check` and return. This is useful for immediately checking for a condition after an asynchronous `action` has been performed.
 
 ```javascript
             if (wait === undefined) return check ();
 ```
 
-If the first argument passed to `next` is not `undefined`, it must be a `wait` parameter, which will invoke `check` after a timeout. We validate that `wait` is an integer equal or larger than 0 and throw an error otherwise.
+If we are here, `wait` is not `undefined`. We validate that `wait` is an integer equal or larger than 0 and throw an error otherwise.
 
 ```javascript
-            if (type (wait) !== 'integer' || wait < 0) throw new Error ('c.test: wait parameter must zero or a positive integer but instead is ' + wait);
+            if (type (wait) !== 'integer' || wait < 0) throw new Error ('c.test: `wait` parameter must be undefined, zero or a positive integer but instead is ' + wait);
 ```
 
-We execute a timeout to execute `check` after `wait` milliseconds.
+If `wait` is set but `ms` is not, we invoke `check` through `setTimeout`, using `wait` as the second parameter to `setTimeout`. This will run the check function once after (approximately) `wait` milliseconds.
 
 ```javascript
-            setTimeout (check, wait);
+            if (ms === undefined)   return setTimeout (check, wait);
 ```
 
-We close the invocation to `action`. If `action` returns anything except `undefined`, we invoke `check`. Otherwise, we'll let `action` invoke `check` on its own.
+If we are here, `ms` is not `undefined`. We validate that `wait` is an larger than 0 and throw an error otherwise.
+
+```javascript
+            if (type (ms) !== 'integer'   || ms < 1)   throw new Error ('c.test: `ms` parameter must be undefined or a positive integer but instead is ' + ms);
+```
+
+We define `until`, a timestamp that will indicate until when we should execute the `check` function should it keep failing. We also set `interval` to the output of a `setInterval` invocation.
+
+```javascript
+            var until = teishi.time () + wait, interval = setInterval (function () {
+```
+
+Within the function we pass to `setInterval`, we will invoke `check` with two parameters: `retry`, which will be `true` if the current time is less or equal than `until`; and `interval`, the interval function that should be cleared if either the check is successful or time runs out; you might recall we execute `clearInterval` on this argument on the `check` function we defined earlier.
+
+```javascript
+               check (teishi.time () <= until, interval);
+```
+
+We execute the interval function every `ms` milliseconds.
+
+```javascript
+            }, ms);
+```
+
+We close the invocation to `action`. If `action` returns anything except `undefined`, we invoke `check` directly. Otherwise, we'll let `action` invoke `check` on its own.
 
 ```javascript
          }) !== undefined) check ();
@@ -1727,7 +1793,7 @@ We close `runNext`.
       }
 ```
 
-We invoke `runNext` passing an index of `0` (to start at the first test) and close the function.
+We invoke `runNext` passing an index of `0` (to start at the first test). This concludes the function.
 
 ```javascript
       runNext (0);

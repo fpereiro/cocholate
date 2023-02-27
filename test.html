@@ -378,7 +378,22 @@
 
                if (c.test ([]) !== undefined) return 'c.test didn\'t accept empty `tests` array.';
 
-               c.test ([['unfinished', function () {}, function () {throw new Error ('Check function was executed synchronously.')}]]);
+               c.test ([['unfinished', function () {}, function () {return 'Check function was executed synchronously.'}]]);
+
+               try {
+                  c.test ([['Invalid `wait` passed to `next`', function (wait) {
+                     wait (null);
+                  }, function () {}]]);
+                  return 'Invalid `wait` parameter accepted';
+               }
+               catch (error) {}
+               try {
+                  c.test ([['Invalid `ms` passed to `next`', function (wait) {
+                     wait (10, -5);
+                  }, function () {}]]);
+                  return 'Invalid `ms` parameter accepted';
+               }
+               catch (error) {}
 
                if (perf) return;
 
@@ -400,18 +415,28 @@
                      return testObject.d === 0;
                   }],
                   ['a5', function (next) {next (10)}, function () {
-
-                     if ((teishi.time () - testObject.t) < 10) throw new Error ('c.test didn\'t specify timeout properly.');
-
-                     if (c.ajax (/invalidmethod/, /invalidpath/) !== false) throw new Error ('c.ajax didn\'t validate its input.');
+                     if ((teishi.time () - testObject.t) < 10) return 'c.test didn\'t specify timeout properly.';
+                     return true;
+                  }],
+                  // On a modern browser, 11ms should be enough to do the check five times; but good-ol' IE6 needs closer to 150ms.
+                  ['a6', function (next) {next (150, 2)}, function () {
+                     if (! testObject.times) testObject.times = 0;
+                     testObject.times++;
+                     return testObject.times === 5;
+                  }],
+                  ['a7', function () {
+                     if (testObject.times > 5) return 'next with `ms` did not stop at the first successful check.';
+                     if (c.ajax (/invalidmethod/, /invalidpath/) !== false) return 'c.ajax didn\'t validate its input.';
 
                      var jsonajax = c.ajax ('post', 'notaroute', {}, {a: 'b'}, function () {});
 
-                     if (type (jsonajax) !== 'object' || ! teishi.eq ({headers: jsonajax.headers, body: jsonajax.body}, {headers: {'content-type': 'application/json'}, body: '{"a":"b"}'})) throw new Error ('Error when sending a JSON request through c.ajax.');
+                     if (type (jsonajax) !== 'object' || ! teishi.eq ({headers: jsonajax.headers, body: jsonajax.body}, {headers: {'content-type': 'application/json'}, body: '{"a":"b"}'})) return 'Error when sending a JSON request through c.ajax.';
 
+                     // We place an `error` variable here so that if the synchronous assertions below the `ajax` call fail, the asynchronous ajax block won't give a thumbs up if it itself ran properly but the synchronous assertions failed.
                      var error;
                      var ajax = c.ajax ('get', 'notaroute', null, null, function () {
                         if (error) return;
+                        // From now on, we need to throw since the `check` function of `c.test` must be synchronous and we're in an asynchronous function.
                         c.loadScript ('cocholate.js', function () {
                            if (arguments [1] && type (arguments [1].headers) !== 'object') throw new Error ('Empty headers are not processed correctly');
                            // We ignore CORS errors when running the test locally.
@@ -429,8 +454,6 @@
                               if (type (result) !== 'object') throw new Error ('c.loadScript didn\'t return the request object returned by c.ajax.');
 
                               setTimeout (function () {
-                                 if (! error) clog ('Success', 'All tests were successful!');
-                                 if (! error) c.fill ('body', lith.g ('All tests were successful!'));
                                  if (! error) done = true;
                               }, 200);
                            });
@@ -439,8 +462,10 @@
 
                      if (type (ajax) !== 'object' || type (ajax.headers) !== 'object' || type (ajax.body) !== 'string' || type (ajax.xhr) !== 'object') {
                         error = true;
-                        throw new Error ('c.ajax didn\'t return a valid object.');
+                        return 'c.ajax didn\'t return a valid object.';
                      }
+
+                     return true;
                   }]
                ]);
             });

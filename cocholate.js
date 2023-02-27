@@ -1,5 +1,5 @@
 /*
-cocholate - v3.1.0
+cocholate - v4.0.0
 
 Written by Federico Pereiro (fpereiro@gmail.com) and released into the public domain.
 
@@ -303,38 +303,49 @@ Please refer to readme.md to read the annotated source.
       });
    }
 
-   c.test = function (tests) {
+   c.test = function (tests, callback) {
 
       if (! c.prod && teishi.stop ('c.test', [
          ['tests', tests, 'array'],
          ['tests', tests, 'array', 'each'],
-         dale.go (tests, function (test, k) {return [
+         dale.go (tests, function (test, k) {return test.length === 0 ? [] : [
             ['test length', test.length, {min: 2, max: 3}, teishi.test.range],
             ['test #' + (k + 1) + ' tag', test [0], 'string'],
             test.length === 2 ? ['test #' + (k + 1) + ' check', test [1], 'function'] : [
                ['test #' + (k + 1) + ' action', test [1], 'function'],
                ['test #' + (k + 1) + ' check',  test [2], 'function']
             ]
-         ]})
+         ]}),
+         ['callback', callback, ['function', 'undefined'], 'oneOf']
       ], undefined, true)) return false;
+
+      callback = callback || function (error, time) {
+         if (error) throw new Error ('c.test: Test failed: ' + error.test + '; result: ' + error.result);
+         clog ('c.test', 'All tests finished successfully (' + (teishi.time () - start) + ' ms)');
+      }
 
       var start = teishi.time (), runNext = function (k) {
          var test = tests [k];
+         if (! test)            return callback (null, teishi.time () - start);
+         if (test.length === 0) return runNext (k + 1);
 
-         if (! test) return clog ('c.test', 'All tests finished successfully (' + (teishi.time () - start) + ' ms)');
-
-         var check = function () {
-            var result = test [test.length === 2 ? 1 : 2] ();
-            if (result === false) throw new Error ('c.test: Test failed: ' + test [0]);
-            runNext (k + 1);
+         var check = function (retry, interval) {
+            var result = test [test.length - 1] ();
+            if (interval && (result === true || ! retry)) clearInterval (interval);
+            if (result === true) return runNext (k + 1);
+            if (! retry) callback ({test: test [0], result: result});
          }
 
          clog ('c.test', 'Running test:', test [0]);
          if (test.length === 2) return check ();
-         if (test [1] (function (wait) {
+         if (test [1] (function (wait, ms) {
             if (wait === undefined) return check ();
-            if (type (wait) !== 'integer' || wait < 0) throw new Error ('c.test: wait parameter must zero or a positive integer but instead is ' + wait);
-            setTimeout (check, wait);
+            if (type (wait) !== 'integer' || wait < 0) throw new Error ('c.test: `wait` parameter must be undefined, zero or a positive integer but instead is ' + wait);
+            if (ms === undefined)   return setTimeout (check, wait);
+            if (type (ms) !== 'integer'   || ms < 1)   throw new Error ('c.test: `ms` parameter must be undefined or a positive integer but instead is ' + ms);
+            var until = teishi.time () + wait, interval = setInterval (function () {
+               check (teishi.time () <= until, interval);
+            }, ms);
          }) !== undefined) check ();
       }
 
